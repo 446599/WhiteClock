@@ -1,0 +1,52 @@
+{
+  "started": "20261004_032307",
+  "mode": "flash",
+  "image_sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51",
+  "before": {
+    "part": "CW32L010F8U6",
+    "pin_count": 20,
+    "ram_bytes": 4096,
+    "flash_bytes": 65536,
+    "security_level": 0,
+    "rtc": [
+      "0x88",
+      "0x200",
+      "0x0",
+      "0x0",
+      "0x261004",
+      "0x120015",
+      "0x1200850",
+      "0x20c2000",
+      "0x0",
+      "0x0",
+      "0xffff",
+      "0x0",
+      "0x0",
+      "0x7f",
+      "0xffff",
+      "0x400f",
+      "0x14d2"
+    ],
+    "sysctrl": [
+      "0x0",
+      "0x9",
+      "0xc00",
+      "0x0",
+      "0x4809",
+      "0xd9fb",
+      "0x1e775",
+      "0x27ff22",
+      "0x18c68",
+      "0xa22",
+      "0x0",
+      "0x7e7",
+      "0x30",
+      "0x102",
+      "0x4"
+    ],
+    "gpiob_idr": "0x8c"
+  },
+  "before_sha256": "153c111b44d466e5bec946a0ea0cae5ba18d4e49a1915d82680dfd18ace4ff22",
+  "flash_started": true,
+  "error": "target was not halted as expected after calling flash algorithm routine (IPSR=3)"
+}

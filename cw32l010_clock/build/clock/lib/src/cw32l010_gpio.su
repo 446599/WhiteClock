@@ -1,0 +1,11 @@
+lib/src/cw32l010_gpio.c:41:6:GPIO_Init	8	static
+lib/src/cw32l010_gpio.c:115:6:GPIO_DeInit	0	static
+lib/src/cw32l010_gpio.c:139:15:GPIO_ReadPin	0	static
+lib/src/cw32l010_gpio.c:163:6:GPIO_WritePin	0	static
+lib/src/cw32l010_gpio.c:182:6:GPIO_Write	0	static
+lib/src/cw32l010_gpio.c:199:6:GPIO_TogglePin	0	static
+lib/src/cw32l010_gpio.c:211:6:GPIO_SWD2GPIO	0	static
+lib/src/cw32l010_gpio.c:222:6:GPIO_GPIO2SWD	0	static
+lib/src/cw32l010_gpio.c:231:6:GPIO_RST2GPIO	0	static
+lib/src/cw32l010_gpio.c:240:6:GPIO_GPIO2RST	0	static
+lib/src/cw32l010_gpio.c:259:6:GPIO_ConfigFilter	0	static

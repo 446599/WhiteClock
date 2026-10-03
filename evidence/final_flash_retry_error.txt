@@ -1,0 +1,116 @@
+ERROR: Error while running debug sequence 'DebugPortSetup' (core Cortex-M0+): SWD/JTAG communication failure (No ACK); check USB cable, reduce debugger clock
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/cmsis_dap_probe.py", line 548, in read_dp_result_callback
+    value = result()
+            ^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 1082, in read_reg_cb
+    res = transfer.get_result()
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 161, in get_result
+    self.daplink.flush()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/utility/concurrency.py", line 29, in _locking
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 887, in flush
+    self._read_packet()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/utility/concurrency.py", line 29, in _locking
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 1168, in _read_packet
+    decoded_data = cmd.decode_data(raw_data)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 484, in decode_data
+    data = self._decode_transfer_block_data(data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 453, in _decode_transfer_block_data
+    self._check_response(data[3])
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 372, in _check_response
+    raise DAPAccessIntf.TransferError("SWD/JTAG communication failure (No ACK); " \
+pyocd.probe.pydapaccess.dap_access_api.DAPAccessIntf.TransferError: SWD/JTAG communication failure (No ACK); check USB cable, reduce debugger clock
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/henry/Documents/ChatGPT/小钟/cw32l010_clock/tools/device.py", line 148, in <module>
+    main()
+  File "/Users/henry/Documents/ChatGPT/小钟/cw32l010_clock/tools/device.py", line 75, in main
+    with session:
+         ^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/core/session.py", line 476, in __enter__
+    self.open()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/core/session.py", line 614, in open
+    self._board.init()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/board/board.py", line 152, in init
+    self.target.init()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/coresight/coresight_target.py", line 126, in init
+    super().init()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/core/soc_target.py", line 174, in init
+    seq.invoke()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/utility/sequencer.py", line 213, in invoke
+    resultSequence.invoke()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/utility/sequencer.py", line 208, in invoke
+    resultSequence = call()
+                     ^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/coresight/dap.py", line 466, in _connect
+    if not self.connect_debug_port_hook():
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/coresight/dap.py", line 447, in connect_debug_port_hook
+    return cst.call_pre_discovery_debug_sequence('DebugPortSetup')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/coresight/coresight_target.py", line 183, in call_pre_discovery_debug_sequence
+    self.debug_sequence_delegate.run_sequence(sequence, pname=pcore_pname)
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/target/pack/pack_target.py", line 315, in run_sequence
+    executed_scope = seq.execute(context)
+                     ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/debug/sequences/sequences.py", line 448, in execute
+    self._execute_children(context)
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/debug/sequences/sequences.py", line 310, in _execute_children
+    cast(DebugSequenceNode, node).execute(context)
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/debug/sequences/sequences.py", line 511, in execute
+    self._execute_children(context)
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/debug/sequences/sequences.py", line 310, in _execute_children
+    cast(DebugSequenceNode, node).execute(context)
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/debug/sequences/sequences.py", line 559, in execute
+    interp.execute()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/debug/sequences/sequences.py", line 1029, in execute
+    return visitor.visit(self._tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/lark/visitors.py", line 423, in visit
+    return self._visit_tree(tree)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/lark/visitors.py", line 431, in _visit_tree
+    return f(tree)
+           ^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/debug/sequences/sequences.py", line 842, in start
+    values = self.visit_children(tree)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/lark/visitors.py", line 434, in visit_children
+    return [self._visit_tree(child) if isinstance(child, Tree) else child
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/lark/visitors.py", line 431, in _visit_tree
+    return f(tree)
+           ^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/debug/sequences/sequences.py", line 887, in expr_stmt
+    values = self.visit_children(tree)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/lark/visitors.py", line 434, in visit_children
+    return [self._visit_tree(child) if isinstance(child, Tree) else child
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/lark/visitors.py", line 431, in _visit_tree
+    return f(tree)
+           ^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/debug/sequences/sequences.py", line 953, in fncall
+    result = impl(*fn_args)
+             ^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/debug/sequences/functions.py", line 383, in readdp
+    return self._get_dp(True).read_dp(addr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/coresight/dap.py", line 823, in read_dp
+    return read_dp_cb()
+           ^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/coresight/dap.py", line 811, in read_dp_cb
+    result = result_cb()
+             ^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/cmsis_dap_probe.py", line 553, in read_dp_result_callback
+    raise self._convert_exception(error) from error
+pyocd.core.exceptions.TransferError: Error while running debug sequence 'DebugPortSetup' (core Cortex-M0+): SWD/JTAG communication failure (No ACK); check USB cable, reduce debugger clock

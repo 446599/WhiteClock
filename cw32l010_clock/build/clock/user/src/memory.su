@@ -1,0 +1,2 @@
+user/src/memory.c:3:7:memcpy	8	static
+user/src/memory.c:9:7:memset	0	static

@@ -1,0 +1,6 @@
+{
+  "started": "20261004_001701",
+  "mode": "flash",
+  "image_sha256": "abd4ed6e6603ee154565437c7dc70452b4fdec6ae35f3ea315645ffb120565ed",
+  "error": "Error while running debug sequence 'DebugPortSetup' (core Cortex-M0+): SWD/JTAG communication failure (No ACK); check USB cable, reduce debugger clock"
+}

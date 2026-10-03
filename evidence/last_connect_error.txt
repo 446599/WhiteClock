@@ -1,0 +1,63 @@
+FileProgrammer no_reset parameter is deprecated and ignored; this option will be removed in a future release
+ERROR: SWD/JTAG communication failure (No ACK); check USB cable, reduce debugger clock
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/cmsis_dap_probe.py", line 602, in read_ap_result_callback
+    value = result()
+            ^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 1082, in read_reg_cb
+    res = transfer.get_result()
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 161, in get_result
+    self.daplink.flush()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/utility/concurrency.py", line 29, in _locking
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 887, in flush
+    self._read_packet()
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/utility/concurrency.py", line 29, in _locking
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 1168, in _read_packet
+    decoded_data = cmd.decode_data(raw_data)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 486, in decode_data
+    data = self._decode_transfer_data(data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 392, in _decode_transfer_data
+    self._check_response(data[2])
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/pydapaccess/dap_access_cmsis_dap.py", line 372, in _check_response
+    raise DAPAccessIntf.TransferError("SWD/JTAG communication failure (No ACK); " \
+pyocd.probe.pydapaccess.dap_access_api.DAPAccessIntf.TransferError: SWD/JTAG communication failure (No ACK); check USB cable, reduce debugger clock
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/henry/Documents/ChatGPT/小钟/cw32l010_clock/tools/device.py", line 144, in <module>
+    main()
+  File "/Users/henry/Documents/ChatGPT/小钟/cw32l010_clock/tools/device.py", line 121, in main
+    sample={n:t.read32(a) for n,a in manifest['debug_symbols'].items()}
+              ^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/core/memory_interface.py", line 116, in read32
+    return self.read_memory(addr, 32, now)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/core/soc_target.py", line 232, in read_memory
+    return self.selected_core_or_raise.read_memory(addr, transfer_size, now)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/coresight/cortex_m.py", line 620, in read_memory
+    result = self.ap.read_memory(addr, transfer_size, now)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/utility/concurrency.py", line 29, in _locking
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/coresight/ap.py", line 1203, in _read_memory
+    result = read_mem_cb()
+             ^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/coresight/ap.py", line 1181, in read_mem_cb
+    res = result_cb() # type: ignore # ignore possibly unbound result_cb
+          ^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/coresight/dap.py", line 923, in read_ap_cb
+    result = result_cb()
+             ^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/site-packages/pyocd/probe/cmsis_dap_probe.py", line 607, in read_ap_result_callback
+    raise self._convert_exception(error) from error
+pyocd.core.exceptions.TransferError: SWD/JTAG communication failure (No ACK); check USB cable, reduce debugger clock

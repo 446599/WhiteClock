@@ -1,0 +1,56 @@
+{
+  "chip": "CW32L010F8U6",
+  "flash_bytes": 65536,
+  "ram_bytes": 4096,
+  "pins": 20,
+  "installed": {
+    "file": "clock-v3-ui-installed.bin",
+    "sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51",
+    "bytes": 18124,
+    "flashed": true,
+    "cold_start_clock": "LSE, 32768 Hz external crystal",
+    "gray_output": "black-white dithering; native four-gray waveform unverified",
+    "settings_pages": [
+      "0xFA00",
+      "0xFC00"
+    ],
+    "full_flash_sha256": "a6cb47b8c66bc95aa9ba16fdb7916d18e1a28fea146ea6a18882391e67381003",
+    "readback_verified": true,
+    "runtime": {
+      "clock_stage": 4,
+      "epd_successes": 1,
+      "epd_failures": 0,
+      "rtc_failures": 0,
+      "key_overflows": 0,
+      "rtc_time": "0x120003",
+      "cpu_state": "State.SLEEPING"
+    },
+    "evidence": "evidence/device_20261004_032432.json",
+    "visual_and_buttons": "awaiting user confirmation"
+  },
+  "candidate": {
+    "file": "clock-v3-ui-candidate.bin",
+    "sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51",
+    "bytes": 18124,
+    "flashed": true,
+    "cold_start_clock": "LSE, 32768 Hz external crystal",
+    "gray_output": "black-white dithering; native four-gray waveform unverified",
+    "settings_pages": [
+      "0xFA00",
+      "0xFC00"
+    ]
+  },
+  "remaining": "v3 installed, full readback and first refresh verified. Visual orientation, buttons and settings persistence require physical validation. Native four-gray remains unverified.",
+  "previous_installed": {
+    "file": "clock-v1-installed.bin",
+    "sha256": "abd4ed6e6603ee154565437c7dc70452b4fdec6ae35f3ea315645ffb120565ed",
+    "bytes": 4972,
+    "full_flash_sha256": "153c111b44d466e5bec946a0ea0cae5ba18d4e49a1915d82680dfd18ace4ff22",
+    "readback_verified": true,
+    "first_refresh_successes": 1,
+    "epd_failures": 0,
+    "rtc_failures": 0,
+    "visual_and_buttons": "User reports upside-down display and slow/missed keys; addressed in unflashed v3 candidate",
+    "cold_start_clock": "LSI, running original LSE is retained"
+  }
+}

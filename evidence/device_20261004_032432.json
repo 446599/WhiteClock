@@ -1,0 +1,82 @@
+{
+  "started": "20261004_032432",
+  "mode": "flash",
+  "image_sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51",
+  "before": {
+    "part": "CW32L010F8U6",
+    "pin_count": 20,
+    "ram_bytes": 4096,
+    "flash_bytes": 65536,
+    "security_level": 0,
+    "rtc": [
+      "0x88",
+      "0x200",
+      "0x0",
+      "0x0",
+      "0x261004",
+      "0x120015",
+      "0x1200850",
+      "0x20c2000",
+      "0x0",
+      "0x0",
+      "0xffff",
+      "0x0",
+      "0x0",
+      "0x7f",
+      "0xffff",
+      "0x400f",
+      "0x14d3"
+    ],
+    "sysctrl": [
+      "0x0",
+      "0x1",
+      "0xc00",
+      "0x0",
+      "0x809",
+      "0xd9fb",
+      "0x1e775",
+      "0x27ff22",
+      "0xc68",
+      "0xa22",
+      "0x0",
+      "0x7e7",
+      "0xff",
+      "0x102",
+      "0x4"
+    ],
+    "gpiob_idr": "0x8c"
+  },
+  "before_sha256": "93e8b2dd6059edaaebc565a00c12fa83141bed0e9febdf7bfabee4ca10448aff",
+  "flash_started": true,
+  "after_sha256": "a6cb47b8c66bc95aa9ba16fdb7916d18e1a28fea146ea6a18882391e67381003",
+  "verified": true,
+  "runtime_samples": [
+    {
+      "clock_stage": 3,
+      "epd_successes": 0,
+      "epd_failures": 0,
+      "rtc_failures": 0,
+      "key_overflows": 0,
+      "rtc_time": "0x120001",
+      "cpu_state": "State.RUNNING"
+    },
+    {
+      "clock_stage": 3,
+      "epd_successes": 0,
+      "epd_failures": 0,
+      "rtc_failures": 0,
+      "key_overflows": 0,
+      "rtc_time": "0x120002",
+      "cpu_state": "State.SLEEPING"
+    },
+    {
+      "clock_stage": 4,
+      "epd_successes": 1,
+      "epd_failures": 0,
+      "rtc_failures": 0,
+      "key_overflows": 0,
+      "rtc_time": "0x120003",
+      "cpu_state": "State.SLEEPING"
+    }
+  ]
+}

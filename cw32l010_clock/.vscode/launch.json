@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "cwd": "${workspaceFolder}",
+      "executable": "./build/Debug/${workspaceFolderBasename}.elf",
+      "name": "Debug with PyOCD (Manual)",
+      "request": "launch",
+      "type": "cortex-debug",
+      "runToEntryPoint": "main",
+      "overrideGDBServerStartedRegex": "(GDB server listening)", // This regex is used to detect when the GDB server has started
+      "showDevDebugOutput": "raw",
+      "servertype": "external",
+      "gdbTarget": "localhost:50000",
+      "gdbPath": "C:\\Users\\ankal\\.eide\\tools\\gcc_arm\\bin\\arm-none-eabi-gdb.exe",
+      "preLaunchTask": "Start PyOCD GDB Server",
+      "postDebugTask": "Stop PyOCD GDB Server"
+    }
+  ]
+}

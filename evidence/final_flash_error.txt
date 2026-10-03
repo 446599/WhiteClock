@@ -1,0 +1,1 @@
+ERROR: Error while running debug sequence 'DebugPortSetup' (core Cortex-M0+): SWD/JTAG communication failure (No ACK); check USB cable, reduce debugger clock

@@ -1,0 +1,11 @@
+[
+  {
+    "clock_stage": 4,
+    "epd_successes": 1,
+    "epd_failures": 0,
+    "rtc_failures": 0,
+    "key_overflows": 0,
+    "rtc_time": "0x50",
+    "state": "State.SLEEPING"
+  }
+]

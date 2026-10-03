@@ -1,0 +1,18 @@
+{
+  "image": "clock.bin",
+  "sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51",
+  "bytes": 18124,
+  "flash_origin": 0,
+  "static_ram_bytes": 1168,
+  "minimum_stack_bytes": 1024,
+  "original_sha256": "0f92f36672594320223d3a23815bd04f864b1163875ef61d41a2460bd0c80c71",
+  "hardware_status": "v3 installed; full 64 KiB readback and first refresh verified; visual/buttons pending",
+  "debug_symbols": {
+    "clock_stage": 536872076,
+    "epd_successes": 536872072,
+    "epd_failures": 536872068,
+    "rtc_failures": 536872064,
+    "key_overflows": 536870916
+  },
+  "hardware_evidence": "evidence/device_20261004_032432.json"
+}

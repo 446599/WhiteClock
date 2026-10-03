@@ -1,0 +1,19 @@
+CompileFlags:
+  Add:
+    - -IC:\Users\Aylina\.eide\tools\gcc_arm\arm-none-eabi\include\newlib-nano
+    - -IC:\Users\Aylina\.eide\tools\gcc_arm\arm-none-eabi\include\c++\14.3.1
+    - -IC:\Users\Aylina\.eide\tools\gcc_arm\arm-none-eabi\include\c++\14.3.1\arm-none-eabi\thumb\v6-m\nofp
+    - -IC:\Users\Aylina\.eide\tools\gcc_arm\arm-none-eabi\include\c++\14.3.1\backward
+    - -IC:\Users\Aylina\.eide\tools\gcc_arm\lib\gcc\arm-none-eabi\14.3.1\include
+    - -IC:\Users\Aylina\.eide\tools\gcc_arm\lib\gcc\arm-none-eabi\14.3.1\include-fixed
+    - -IC:\Users\Aylina\.eide\tools\gcc_arm\arm-none-eabi\include
+    - -isystemC:\Users\ankal\.eide\tools\gcc_arm\arm-none-eabi\include\newlib-nano
+    - -isystemC:\Users\ankal\.eide\tools\gcc_arm\arm-none-eabi\include\c++\15.2.1
+    - -isystemC:\Users\ankal\.eide\tools\gcc_arm\arm-none-eabi\include\c++\15.2.1\arm-none-eabi\thumb\v6-m\nofp
+    - -isystemC:\Users\ankal\.eide\tools\gcc_arm\arm-none-eabi\include\c++\15.2.1\backward
+    - -isystemC:\Users\ankal\.eide\tools\gcc_arm\lib\gcc\arm-none-eabi\15.2.1\include
+    - -isystemC:\Users\ankal\.eide\tools\gcc_arm\lib\gcc\arm-none-eabi\15.2.1\include-fixed
+    - -isystemC:\Users\ankal\.eide\tools\gcc_arm\arm-none-eabi\include
+  Remove: []
+  CompilationDatabase: ./build/Debug
+  Compiler: C:\Users\ankal\.eide\tools\gcc_arm\bin\arm-none-eabi-gcc.exe

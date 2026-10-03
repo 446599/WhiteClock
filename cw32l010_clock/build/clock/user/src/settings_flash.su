@@ -1,0 +1,5 @@
+user/src/settings_flash.c:5:13:ready	16	static
+user/src/settings_flash.c:12:13:operation	40	static
+user/src/settings_flash.c:4:16:settings_flash_read	0	static
+user/src/settings_flash.c:30:6:settings_flash_erase	8	static
+user/src/settings_flash.c:31:6:settings_flash_program	8	static

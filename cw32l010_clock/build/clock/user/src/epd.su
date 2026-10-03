@@ -1,0 +1,6 @@
+user/src/epd.c:29:13:wait_for	8	static
+user/src/epd.c:14:13:command	16	static
+user/src/epd.c:15:13:reg	16	static
+user/src/epd.c:34:6:epd_active	0	static
+user/src/epd.c:35:6:epd_start	24	static
+user/src/epd.c:54:5:epd_poll	40	static
