@@ -19,6 +19,14 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / 'build/clock'
 EVIDENCE = ROOT.parent / 'evidence'
 ORIGINAL_HASH = '0f92f36672594320223d3a23815bd04f864b1163875ef61d41a2460bd0c80c71'
+# pyOCD 0.36 uses SW_SYSRESETREQ; newer releases renamed it SYSRESETREQ.
+# Preserve the same explicit software reset: never fall back to nRESET/erase.
+if hasattr(Target.ResetType, 'SYSRESETREQ'):
+    SOFTWARE_RESET = Target.ResetType.SYSRESETREQ
+    SOFTWARE_RESET_OPTION = 'sysresetreq'
+else:
+    SOFTWARE_RESET = Target.ResetType.SW_SYSRESETREQ
+    SOFTWARE_RESET_OPTION = 'sw_sysresetreq'
 
 
 def digest(data):
@@ -67,7 +75,7 @@ def main():
         unique_id=args.probe, target_override='cw32l010f8',
         pack=str(ROOT/'pack/WHXY.CW32L010_DFP.1.0.2.pack'),
         frequency=args.frequency, connect_mode='attach', auto_unlock=False,
-        resume_on_disconnect=False, reset_type='sysresetreq',
+        resume_on_disconnect=False, reset_type=SOFTWARE_RESET_OPTION,
         options={'cache.enable_memory':False})
     if session is None:
         raise RuntimeError('WCH-Link not detected.')
@@ -104,7 +112,7 @@ def main():
                 report_file.write_text(json.dumps(report,indent=2)+'\n')
                 # Clear exception state and inherited application interrupts before
                 # executing RAM algorithms (the first erased page holds vectors).
-                t.reset_and_halt(reset_type=Target.ResetType.SYSRESETREQ)
+                t.reset_and_halt(reset_type=SOFTWARE_RESET)
                 t.write32(0xe000e010, 0)          # SysTick CTRL
                 t.write32(0xe000e180, 0xffffffff) # NVIC ICER
                 t.write32(0xe000e280, 0xffffffff) # NVIC ICPR
@@ -121,7 +129,7 @@ def main():
                 verified = True
                 report['verified'] = True
                 print('VERIFY PASS: programmed image and all unchanged flash bytes match.',flush=True)
-                t.reset(reset_type=Target.ResetType.SYSRESETREQ)
+                t.reset(reset_type=SOFTWARE_RESET)
                 # The programming algorithm can leave reset vector catch set.
                 t.resume()
                 if args.restore:

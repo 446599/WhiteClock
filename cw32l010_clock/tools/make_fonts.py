@@ -10,7 +10,7 @@ import re
 import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 URL = 'https://unifoundry.com/pub/unifont/unifont-16.0.04/font-builds/unifont-16.0.04.hex.gz'
-EXPECTED_SHA256 = ''  # pinned by the first verified build
+EXPECTED_SHA256 = 'f9c8c7802453f47be02677176aeac2342ee96d354fad7a26cedcce48e68e1d9f'
 cache = ROOT / 'build/font-cache/unifont-16.0.04.hex.gz'
 cache.parent.mkdir(parents=True, exist_ok=True)
 if not cache.exists():
