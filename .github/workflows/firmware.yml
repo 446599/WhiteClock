@@ -1,0 +1,42 @@
+name: CW32 firmware
+on:
+  push:
+    branches: [codex/desktop-clock-v4]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi binutils-arm-none-eabi python3-pil
+      - name: Archive build sources
+        run: tar --exclude='*/build' --exclude='*/releases' --exclude='*/design' --exclude='*/.pack' -czf source-snapshot.tar.gz cw32l010_clock cw32l010_original_64k.bin README.md
+      - name: Clean firmware build
+        working-directory: cw32l010_clock
+        run: make clean && make -j2
+      - name: Host regression tests
+        working-directory: cw32l010_clock
+        run: |
+          make test
+          python3 -m unittest discover -s tests -p 'test_device.py'
+      - name: Verify image and memory bounds
+        working-directory: cw32l010_clock
+        run: python3 tools/verify_image.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cw32-firmware-${{ github.sha }}
+          path: |
+            source-snapshot.tar.gz
+            cw32l010_clock/build/clock/clock.bin
+            cw32l010_clock/build/clock/clock.hex
+            cw32l010_clock/build/clock/clock.elf
+            cw32l010_clock/build/clock/clock.map
+            cw32l010_clock/build/clock/manifest.json
+          retention-days: 14
