@@ -14,7 +14,7 @@ static void output(const char *path,ClockFace *f,int dither)
 int main(void)
 {
     ClockTime t={26,10,4,14,36,0};ClockSettings s=clock_defaults();
-    ClockUI ui;clock_ui_init(&ui,&t,&s);char path[100];
+    ClockUI ui;clock_ui_init(&ui,&t,&s);ui.temperature_c=26;ui.temperature_valid=1;char path[100];
     for(unsigned theme=0;theme<3;++theme){
         ui.settings.theme=theme;
         ClockFace f=clock_ui_face(&ui);
@@ -22,11 +22,15 @@ int main(void)
         snprintf(path,sizeof path,"design/theme-%u-dither.pgm",theme+1);output(path,&f,1);
         f.inverted=1;snprintf(path,sizeof path,"design/theme-%u-night.pgm",theme+1);output(path,&f,0);
     }
-    for(unsigned page=1;page<=6;++page){
+    for(unsigned page=1;page<=PAGE_FOCUS;++page){
         ui.page=page;ui.cursor=page==PAGE_INVERT?2:0;ui.draft_settings=ui.settings;
         ClockFace f=clock_ui_face(&ui);
         snprintf(path,sizeof path,"design/menu-%u.pgm",page);output(path,&f,0);
     }
+    ui.page=PAGE_FOCUS;ui.focus_state=FOCUS_PAUSED;
+    ClockFace paused=clock_ui_face(&ui);output("design/focus-paused.pgm",&paused,0);
+    ui.focus_state=FOCUS_DONE;ui.focus_remaining_ms=0;
+    ClockFace done=clock_ui_face(&ui);output("design/focus-done.pgm",&done,0);
     ui.page=PAGE_HOME;ui.settings.hour12=1;ui.settings.theme=0;
     ClockFace f=clock_ui_face(&ui);output("design/12-hour.pgm",&f,0);
 }

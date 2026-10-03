@@ -10,7 +10,7 @@ volatile uint32_t key_overflows;
 void SysTick_Handler(void)
 {
     ++millis;
-    if (millis % 10u) return;
+    if (millis % 5u) return;
     for (unsigned i = 0; i < 2u; ++i) {
         uint8_t key = clock_button_sample(&buttons[i],
             (CW_GPIOB->IDR & (GPIO_PIN_2 << i)) == 0, i == 1u, millis);
@@ -38,26 +38,37 @@ void board_delay(uint32_t ms)
 bool board_epd_busy(void) { return PA01_GETVALUE() == 0; }
 void board_epd_reset(bool high) { if (high) PA02_SETHIGH(); else PA02_SETLOW(); }
 
-bool board_epd_write(bool data, const uint8_t *bytes, unsigned length)
+static struct {
+    const uint8_t *bytes;
+    unsigned length, offset;
+    uint32_t started;
+    bool active;
+} spi_tx;
+bool board_epd_begin(bool data,const uint8_t *bytes,unsigned length)
 {
+    if (spi_tx.active || !bytes || !length) return false;
+    spi_tx.bytes=bytes;spi_tx.length=length;spi_tx.offset=0;
+    spi_tx.started=millis;spi_tx.active=true;
     if (data) PA04_SETHIGH(); else PA04_SETLOW();
     PA03_SETLOW();
-    bool ok = true;
-    for (unsigned i = 0; i < length; ++i) {
-        uint32_t start = millis;
-        while (!(CW_SPI->ISR & SPI_FLAG_TXE))
-            if (millis - start >= 20u) { ok = false; goto done; }
-        SPI_SendData(CW_SPI, bytes[i]);
+    return true;
+}
+int board_epd_poll(void)
+{
+    if (!spi_tx.active) return 0;
+    /* TXE/BUSY are sampled, never spun on. Even broken SPI cannot stall keys. */
+    if (millis-spi_tx.started>=5u) {
+        PA03_SETHIGH();spi_tx.active=false;return -1;
     }
-    /* TXE must become set before BUSY may safely be tested. */
-    {
-        uint32_t start = millis;
-        while (!(CW_SPI->ISR & SPI_FLAG_TXE) || (CW_SPI->ISR & SPI_FLAG_BUSY))
-            if (millis - start >= 20u) { ok = false; break; }
+    for (unsigned budget=0;budget<8u && spi_tx.offset<spi_tx.length;++budget) {
+        if (!(CW_SPI->ISR & SPI_FLAG_TXE)) return 0;
+        SPI_SendData(CW_SPI,spi_tx.bytes[spi_tx.offset++]);
     }
-done:
-    PA03_SETHIGH();
-    return ok;
+    if (spi_tx.offset==spi_tx.length && (CW_SPI->ISR & SPI_FLAG_TXE) &&
+        !(CW_SPI->ISR & SPI_FLAG_BUSY)) {
+        PA03_SETHIGH();spi_tx.active=false;return 1;
+    }
+    return 0;
 }
 
 void board_init(void)

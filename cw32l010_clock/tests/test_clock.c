@@ -9,20 +9,40 @@ static bool busy, fail_write;
 static uint8_t cmd;
 static unsigned bytes_old,bytes_new,luts,refreshes,offs,sleeps;
 static bool fast;
+static uint8_t wire_old[5624],wire_new[5624];
 uint32_t board_millis(void) { return tick; }
 void board_delay(uint32_t ms) { (void)ms; assert(!"blocking delay in EPD"); }
 bool board_epd_busy(void) { return busy; }
 void board_epd_reset(bool high) { (void)high; }
-bool board_epd_write(bool data,const uint8_t *p,unsigned n)
+static bool write_complete(bool data,const uint8_t *p,unsigned n)
 {
     if(fail_write) return false;
     if(!data) { assert(n==1); cmd=*p; if(cmd==0x12) ++refreshes; if(cmd==2) ++offs; if(cmd==7) ++sleeps; }
     else {
-        if(cmd==0x10) bytes_old+=n;
-        if(cmd==0x13) bytes_new+=n;
+        if(cmd==0x10) { memcpy(wire_old+bytes_old%5624,p,n);bytes_old+=n; }
+        if(cmd==0x13) { memcpy(wire_new+bytes_new%5624,p,n);bytes_new+=n; }
         if(cmd>=0x20 && cmd<=0x24) { assert(n==56); assert(!memcmp(p,fast ? epd_fast_lut[cmd-0x20] : epd_full_lut[cmd-0x20],56)); ++luts; }
     }
     return true;
+}
+static const uint8_t *tx_pointer;
+static uint8_t tx_copy[56];
+static unsigned tx_length;
+static bool tx_data,tx_active;
+bool board_epd_begin(bool data,const uint8_t *p,unsigned n)
+{
+    assert(!tx_active && n && n<=sizeof tx_copy);
+    if (fail_write) return false;
+    tx_pointer=p;tx_length=n;tx_data=data;tx_active=true;
+    memcpy(tx_copy,p,n);
+    return true;
+}
+int board_epd_poll(void)
+{
+    assert(tx_active);
+    assert(!memcmp(tx_pointer,tx_copy,tx_length));
+    tx_active=false;
+    return write_complete(tx_data,tx_pointer,tx_length) ? 1 : -1;
 }
 static int finish(unsigned limit)
 {
@@ -76,7 +96,7 @@ int main(void)
     clock_ui_saved(&u,false); assert(u.page==PAGE_TIME && u.error==2);
     clock_ui_saved(&u,true); assert(u.page==PAGE_MENU && !u.error);
     u.page=PAGE_HOME; ClockFace f=clock_ui_face(&u);
-    for(unsigned theme=0;theme<THEME_COUNT;++theme) for(unsigned page=0;page<=PAGE_THEME;++page) {
+    for(unsigned theme=0;theme<THEME_COUNT;++theme) for(unsigned page=0;page<=PAGE_FOCUS;++page) {
         f.settings.theme=theme; f.page=page;
         for(unsigned y=0;y<PANEL_HEIGHT;++y) {
             uint8_t row[19];clock_render_row(&f,y,row);
@@ -88,7 +108,21 @@ int main(void)
     }
     f.page=PAGE_HOME; assert(epd_start(0,&f,false)); assert(!epd_start(0,&f,false));
     assert(finish(3000)==1); assert(bytes_old==5624 && bytes_new==5624 && luts==5 && refreshes==1 && offs==1 && sleeps==1);
+    for(unsigned i=0;i<5624;++i) assert(wire_old[i]==(EPD_PANEL_INVERT_DATA?0:255));
+    for(unsigned y=0;y<PANEL_HEIGHT;++y) {
+        uint8_t row[19];clock_render_row(&f,y,row);
+        for(unsigned i=0;i<19;++i) assert(wire_new[y*19+i]==(uint8_t)(row[i]^(EPD_PANEL_INVERT_DATA?255:0)));
+    }
     fast=true; assert(epd_start(&f,&f,true)); assert(finish(3000)==1);
+    ClockFace latest=f;latest.time.minute=(f.time.minute+1u)%60u;
+    unsigned before_new=bytes_new;
+    assert(epd_start(&f,&f,true));assert(epd_retarget(&latest));
+    while(bytes_new==before_new) { ++tick;assert(epd_poll()==0); }
+    assert(!epd_retarget(&f));assert(finish(3000)==1);
+    for(unsigned y=0;y<PANEL_HEIGHT;++y) {
+        uint8_t row[19];clock_render_row(&latest,y,row);
+        for(unsigned i=0;i<19;++i) assert(wire_new[y*19+i]==(uint8_t)(row[i]^(EPD_PANEL_INVERT_DATA?255:0)));
+    }
     busy=true; assert(epd_start(&f,&f,true)); assert(finish(21000)==-1); busy=false;
     fail_write=true; assert(epd_start(0,&f,false)); assert(finish(1000)==-1); fail_write=false;
     assert(!epd_active());

@@ -13,13 +13,16 @@ typedef struct { uint8_t year, month, day, hour, minute, second; } ClockTime;
 typedef struct {
     uint8_t theme, hour12, invert_enabled, start_hour, start_minute, end_hour, end_minute;
 } ClockSettings;
-enum { PAGE_HOME, PAGE_MENU, PAGE_TIME, PAGE_DATE, PAGE_FORMAT, PAGE_INVERT, PAGE_THEME };
+enum { PAGE_HOME, PAGE_MENU, PAGE_TIME, PAGE_DATE, PAGE_FORMAT, PAGE_INVERT, PAGE_THEME, PAGE_FOCUS };
 enum { KEY_NONE, KEY_NEXT, KEY_BACK, KEY_OK, KEY_REPEAT };
+enum { FOCUS_IDLE, FOCUS_RUNNING, FOCUS_PAUSED, FOCUS_DONE };
 enum { ACTION_NONE, ACTION_SET_CLOCK, ACTION_SAVE_SETTINGS };
 typedef struct {
     ClockTime time;
     ClockSettings settings;
     uint8_t page, cursor, error, inverted;
+    int8_t temperature_c;
+    uint8_t temperature_valid, focus_minutes, focus_state, focus_progress;
 } ClockFace;
 typedef struct {
     uint32_t changed_at, pressed_at, repeated_at;
@@ -29,6 +32,9 @@ typedef struct {
     ClockTime live, draft;
     ClockSettings settings, draft_settings;
     uint8_t page, cursor, error;
+    int8_t temperature_c;
+    uint8_t temperature_valid, focus_state, focus_preset;
+    uint32_t focus_remaining_ms, focus_tick;
 } ClockUI;
 
 bool clock_decode(uint32_t bcd, uint8_t *h, uint8_t *m, uint8_t *s);
@@ -47,6 +53,7 @@ void clock_ui_init(ClockUI *ui, const ClockTime *time, const ClockSettings *sett
 uint8_t clock_ui_key(ClockUI *ui, uint8_t key);
 void clock_ui_saved(ClockUI *ui, bool success);
 ClockFace clock_ui_face(const ClockUI *ui);
+void clock_ui_tick(ClockUI *ui, uint32_t now);
 bool clock_face_equal(const ClockFace *a, const ClockFace *b);
 /* Four luminance levels: 0 black, 1 dark gray, 2 light gray, 3 white. */
 uint8_t clock_shade(const ClockFace *face, unsigned x, unsigned y);

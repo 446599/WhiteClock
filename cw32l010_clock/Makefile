@@ -1,3 +1,4 @@
+.DEFAULT_GOAL := all
 PREFIX ?= arm-none-eabi-
 CC = $(PREFIX)gcc
 OBJCOPY = $(PREFIX)objcopy
@@ -15,7 +16,13 @@ SOURCES = $(wildcard user/src/*.c) lib/src/system_cw32l010.c \
           lib/src/cw32l010_sysctrl.c
 OBJECTS = $(patsubst %.c,$(BUILD)/%.o,$(SOURCES)) $(BUILD)/startup.o
 
-.PHONY: all clean
+.PHONY: all clean fonts
+fonts: user/inc/ui_font.h
+user/inc/ui_font.h: tools/make_fonts.py user/src/clock_render.c
+	python3 tools/make_fonts.py
+$(OBJECTS): | user/inc/ui_font.h
+
+
 all: $(BUILD)/clock.bin $(BUILD)/clock.hex
 $(BUILD)/clock.elf: $(OBJECTS) link/CW32L010_FLASH.ld
 	$(CC) $(LDFLAGS) $(OBJECTS) -lgcc -o $@
@@ -53,4 +60,21 @@ test: test-settings
 test-settings: $(BUILD)/test_settings
 	./$(BUILD)/test_settings
 $(BUILD)/test_settings: tests/test_settings.c user/src/settings.c user/src/clock_core.c user/src/clock_render.c
-	$(HOST_CC) -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=all -Iuser/inc $^ -o $@
+	$(HOST_CC) -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=all -Iuser/inc $(filter %.c,$^) -o $@
+
+$(BUILD)/test_clock $(BUILD)/test_rtc $(BUILD)/test_settings: user/inc/ui_font.h user/inc/clock_core.h user/inc/epd.h
+.PHONY: test-desktop
+test: test-desktop
+test-desktop: $(BUILD)/test_desktop
+	./$(BUILD)/test_desktop
+$(BUILD)/test_desktop: tests/test_desktop.c user/src/temperature_math.c user/src/clock_core.c user/src/clock_render.c user/inc/clock_core.h user/inc/ui_font.h
+	@mkdir -p $(BUILD)
+	$(HOST_CC) -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=all -Iuser/inc $(filter %.c,$^) -o $@
+
+.PHONY: test-spi
+test: test-spi
+test-spi: $(BUILD)/test_spi
+	./$(BUILD)/test_spi
+$(BUILD)/test_spi: tests/test_spi.c tests/fake_spi/main.h user/src/board.c user/src/clock_core.c user/src/clock_render.c user/inc/ui_font.h
+	@mkdir -p $(BUILD)
+	$(HOST_CC) -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=all -Itests/fake_spi -Iuser/inc $(filter %.c,$^) -o $@

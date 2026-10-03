@@ -87,6 +87,9 @@ uint8_t clock_button_sample(ClockButton *b, bool pressed, bool ok, uint32_t now)
 }
 void clock_ui_init(ClockUI *u, const ClockTime *t, const ClockSettings *s)
 {
+    *u = (ClockUI){0};
+    u->focus_preset = 2;
+    u->focus_remaining_ms = 25u*60000u;
     u->live = u->draft = *t;
     u->settings = u->draft_settings = *s;
     u->page = PAGE_HOME; u->cursor = u->error = 0;
@@ -98,7 +101,7 @@ static void clamp_day(ClockTime *t)
 }
 uint8_t clock_ui_key(ClockUI *u, uint8_t key)
 {
-    if (!key) return ACTION_NONE;
+    if (!key || (u->error==3 && key!=KEY_BACK)) return ACTION_NONE;
     if (key == KEY_BACK) {
         u->cursor=0; u->error=0;
         if (u->page == PAGE_HOME) u->page=PAGE_MENU;
@@ -109,14 +112,27 @@ uint8_t clock_ui_key(ClockUI *u, uint8_t key)
         if (key==KEY_NEXT) { u->page=PAGE_MENU; u->cursor=0; }
         if (key==KEY_OK) { u->settings.theme=(u->settings.theme+1u)%THEME_COUNT; return ACTION_SAVE_SETTINGS; }
     } else if (u->page == PAGE_MENU) {
-        if (key==KEY_NEXT) u->cursor=(u->cursor+1u)%6u;
+        if (key==KEY_NEXT) u->cursor=(u->cursor+1u)%7u;
         if (key==KEY_OK) {
-            if (u->cursor==5) { u->page=PAGE_HOME; u->cursor=0; return ACTION_SAVE_SETTINGS; }
-            static const uint8_t pages[]={PAGE_TIME,PAGE_DATE,PAGE_FORMAT,PAGE_INVERT,PAGE_THEME};
+            if (u->cursor==6) { u->page=PAGE_HOME; u->cursor=0; return ACTION_SAVE_SETTINGS; }
+            static const uint8_t pages[]={PAGE_TIME,PAGE_DATE,PAGE_FORMAT,PAGE_INVERT,PAGE_THEME,PAGE_FOCUS};
             u->page=pages[u->cursor];
             u->draft=u->live; u->draft_settings=u->settings;
             u->cursor=u->page==PAGE_FORMAT ? u->settings.hour12 : u->page==PAGE_THEME ? u->settings.theme : 0;
             u->error=0;
+        }
+    } else if (u->page==PAGE_FOCUS) {
+        static const uint8_t minutes[] = {5,15,25,45,60};
+        if (key==KEY_NEXT) {
+            if (u->focus_state==FOCUS_IDLE) u->focus_preset=(u->focus_preset+1u)%5u;
+            u->focus_state=FOCUS_IDLE;
+            u->focus_remaining_ms=minutes[u->focus_preset]*60000u;
+        }
+        if (key==KEY_OK) {
+            if (u->focus_state==FOCUS_DONE) {
+                u->focus_remaining_ms=minutes[u->focus_preset]*60000u;
+                u->focus_state=FOCUS_IDLE;
+            } else u->focus_state=u->focus_state==FOCUS_RUNNING ? FOCUS_PAUSED : FOCUS_RUNNING;
         }
     } else if (u->page==PAGE_FORMAT || u->page==PAGE_THEME) {
         if (key==KEY_NEXT) u->cursor=(u->cursor+1u)%(u->page==PAGE_THEME ? THEME_COUNT : 2u);
@@ -165,14 +181,31 @@ void clock_ui_saved(ClockUI *u, bool success)
 }
 ClockFace clock_ui_face(const ClockUI *u)
 {
-    ClockFace f;
+    ClockFace f = {0};
     f.time=(u->page==PAGE_TIME || u->page==PAGE_DATE) ? u->draft : u->live;
     f.time.second=0;
     f.settings=u->page==PAGE_INVERT ? u->draft_settings : u->settings;
     if (u->page==PAGE_THEME) f.settings.theme=u->cursor;
     f.page=u->page; f.cursor=u->cursor; f.error=u->error;
     f.inverted=clock_inverted(&u->settings,&u->live);
+    if (u->page==PAGE_HOME || u->page==PAGE_THEME || u->page==PAGE_FOCUS) {
+        f.temperature_c=u->temperature_c; f.temperature_valid=u->temperature_valid;
+        f.focus_state=u->focus_state;
+        f.focus_minutes=(u->focus_remaining_ms+59999u)/60000u;
+        static const uint8_t minutes[]={5,15,25,45,60};
+        f.focus_progress=100u-(f.focus_minutes*100u/minutes[u->focus_preset]);
+    }
     return f;
+}
+void clock_ui_tick(ClockUI *u, uint32_t now)
+{
+    uint32_t elapsed=now-u->focus_tick;
+    u->focus_tick=now;
+    if (u->focus_state!=FOCUS_RUNNING) return;
+    if (elapsed>=u->focus_remaining_ms) {
+        u->focus_remaining_ms=0; u->focus_state=FOCUS_DONE;
+        if (u->page==PAGE_HOME) { u->page=PAGE_FOCUS; u->cursor=0; }
+    } else u->focus_remaining_ms-=elapsed;
 }
 bool clock_face_equal(const ClockFace *a, const ClockFace *b)
 {

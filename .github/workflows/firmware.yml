@@ -15,28 +15,33 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi binutils-arm-none-eabi python3-pil
-      - name: Archive build sources
-        run: tar --exclude='*/build' --exclude='*/releases' --exclude='*/design' --exclude='*/.pack' -czf source-snapshot.tar.gz cw32l010_clock cw32l010_original_64k.bin README.md
-      - name: Clean firmware build
+          python3 -m venv --system-site-packages /tmp/clock-tests
+          /tmp/clock-tests/bin/pip install pyocd==0.36.0
+          echo /tmp/clock-tests/bin >> "$GITHUB_PATH"
+      - name: Build and verify firmware
         working-directory: cw32l010_clock
-        run: make clean && make -j2
+        run: |
+          make clean
+          make fonts
+          make -j2
+          python3 tools/verify_image.py
       - name: Host regression tests
         working-directory: cw32l010_clock
         run: |
           make test
           python3 -m unittest discover -s tests -p 'test_device.py'
-      - name: Verify image and memory bounds
-        working-directory: cw32l010_clock
-        run: python3 tools/verify_image.py
+          python3 tools/preview_desktop.py
+          python3 -c "import json,os,pathlib; p=pathlib.Path('build/clock/manifest.json'); m=json.loads(p.read_text()); m.update(source_commit=os.environ['GITHUB_SHA'],host_tests='passed'); p.write_text(json.dumps(m,indent=2)+'\n')"
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: success()
         with:
-          name: cw32-firmware-${{ github.sha }}
+          name: desktop-clock-v4-${{ github.sha }}
           path: |
-            source-snapshot.tar.gz
             cw32l010_clock/build/clock/clock.bin
             cw32l010_clock/build/clock/clock.hex
             cw32l010_clock/build/clock/clock.elf
             cw32l010_clock/build/clock/clock.map
             cw32l010_clock/build/clock/manifest.json
-          retention-days: 14
+            cw32l010_clock/design/desktop-v4.png
+            cw32l010_clock/docs/
+          retention-days: 30

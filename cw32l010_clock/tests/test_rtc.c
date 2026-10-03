@@ -55,6 +55,17 @@ int main(void)
     uint32_t saved_date=test_rtc.DATE;
     assert(board_rtc_set(22,17) && test_rtc.DATE==saved_date);
     date.year=25;assert(!board_rtc_save(&date,true));
+    date.year=24;test_rtc.CR1_f.WAIT=0;test_rtc.CR1_f.WINDOW=0;
+    assert(board_rtc_save_start(&date,false));assert(!board_rtc_save_start(&date,false));
+    before=tick;assert(board_rtc_save_poll()==0 && tick==before);
+    assert(test_rtc.CR1_f.ACCESS);
+    assert(board_rtc_save_poll()==0 && tick==before);
+    test_rtc.CR1_f.WINDOW=1;assert(board_rtc_save_poll()==0 && tick==before);
+    assert(board_rtc_save_poll()==1 && test_rtc.KEY==0x55 && test_rtc.TIME==0x010200);
+    test_rtc.CR1_f.WINDOW=0;
+    assert(board_rtc_save_start(&date,false));assert(board_rtc_save_poll()==0);
+    tick+=1200;assert(board_rtc_save_poll()==-1 && !test_rtc.CR1_f.ACCESS && test_rtc.KEY==0x55);
+    assert(board_rtc_save_poll()==0);
     test_sysctrl.LSE_f.STABLE = 0;
     before = tick;
     assert(!board_rtc_init() && tick-before == 3000);

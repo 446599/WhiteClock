@@ -3,7 +3,7 @@
 
 enum { DRAW_RECT, DRAW_SMALL, DRAW_LARGE, DRAW_MEDIUM };
 typedef struct { uint16_t x,y,a,b; uint8_t kind,shade; } DrawOp;
-static DrawOp ops[96];
+static DrawOp ops[112];
 static unsigned op_count;
 static ClockFace cached;
 static bool cache_valid;
@@ -18,13 +18,14 @@ static uint16_t next_char(const char **p)
     const uint8_t *s=(const uint8_t *)*p;
     uint16_t c;
     if (*s<128) { c=*s; *p+=1; }
+    else if (*s<224u) { c=((s[0]&31u)<<6)|(s[1]&63u); *p+=2; }
     else { c=((s[0]&15u)<<12)|((s[1]&63u)<<6)|(s[2]&63u); *p+=3; }
     return c;
 }
 static unsigned text_width(const char *s)
 {
     unsigned n=0;
-    while (*s) n+=next_char(&s)<128 ? 8u : 16u;
+    while (*s) n+=next_char(&s)<256 ? 8u : 16u;
     return n;
 }
 static void text(unsigned x,unsigned y,const char *s,unsigned shade)
@@ -33,7 +34,7 @@ static void text(unsigned x,unsigned y,const char *s,unsigned shade)
         uint16_t c=next_char(&s);
         for (unsigned i=0;i<SMALL_GLYPH_COUNT;++i)
             if (small_glyphs[i].code==c) { add(x,y,i,0,DRAW_SMALL,shade); break; }
-        x+=c<128 ? 8u : 16u;
+        x+=c<256 ? 8u : 16u;
     }
 }
 static void centered(unsigned y,const char *s,unsigned shade) { text((296u-text_width(s))/2u,y,s,shade); }
@@ -52,44 +53,70 @@ static void time_digits(const ClockTime *t,bool hour12,unsigned x,unsigned y,uns
     const uint8_t digits[]={h/10u,h%10u,10u,t->minute/10u,t->minute%10u};
     for (unsigned i=0;i<5;++i) add(x+i*step,y,digits[i],0,large?DRAW_LARGE:DRAW_MEDIUM,shade);
 }
+static void outline(unsigned x,unsigned y,unsigned w,unsigned h)
+{
+    rect(x,y,w,1,0);rect(x,y+h-1,w,1,0);
+    rect(x,y,1,h,0);rect(x+w-1,y,1,h,0);
+}
+static void temperature(const ClockFace *f,unsigned x,unsigned y)
+{
+    char value[]="芯温 --°C";
+    if (f->temperature_valid) {
+        int t=f->temperature_c;
+        if (t<0) { text(x,y,"芯温",0); text(x+40,y,"-",0); t=-t;
+            char n[]="00°C";two(n,(unsigned)t);text(x+48,y,n,0);return; }
+        two(value+7,(unsigned)t);
+    }
+    text(x,y,value,0);
+}
 static void home(const ClockFace *f)
 {
     const ClockTime *t=&f->time;
     char date[32];date_text(date,t);
     const char *period=f->settings.hour12 ? (t->hour<12 ? "上午" : "下午") : "24小时制";
+    text(14,10,date,0);text(234,10,weekdays[clock_weekday(t)],0);
+    rect(14,32,268,1,0);
     if (f->settings.theme==0) {
-        text(16,12,date,0);text(232,12,weekdays[clock_weekday(t)],0);
-        rect(16,34,264,1,2);
-        time_digits(t,f->settings.hour12,47,49,41,true,0);
-        rect(16,116,264,1,2);
-        text(16,126,period,0);text(216,126,"时光留白",0);
+        time_digits(t,f->settings.hour12,47,41,41,true,0);
     } else if (f->settings.theme==1) {
-        text(16,10,date,0);text(280-text_width(period),10,period,0);
         unsigned h=clock_display_hour(t->hour,f->settings.hour12);
         const uint8_t d[]={h/10u,h%10u,t->minute/10u,t->minute%10u};
         static const uint8_t xs[]={18,76,170,228};
         for (unsigned i=0;i<4;++i) {
-            rect(xs[i]+2,41,50,71,1);rect(xs[i],38,50,71,2);
-            rect(xs[i],38,50,1,0);rect(xs[i],108,50,1,0);
-            add(xs[i]+6,47,d[i],0,DRAW_LARGE,0);
-            rect(xs[i],73,4,2,1);rect(xs[i]+46,73,4,2,1);
+            outline(xs[i],39,50,60);
+            add(xs[i]+6,43,d[i],0,DRAW_LARGE,0);
         }
-        rect(145,60,5,5,0);rect(145,83,5,5,0);
-        centered(128,weekdays[clock_weekday(t)],0);
+        rect(145,57,5,5,0);rect(145,79,5,5,0);
     } else {
-        rect(12,12,88,128,2);rect(12,12,88,25,0);
-        char month[]="00月";two(month,t->month);text(40,16,month,3);
-        add(18,48,t->day/10u,0,DRAW_LARGE,0);add(56,48,t->day%10u,0,DRAW_LARGE,0);
-        text(32,115,weekdays[clock_weekday(t)],0);
-        char year[]="2000年";two(year+2,t->year);text(122,17,year,0);
-        text(282-text_width(period),17,period,0);
-        time_digits(t,f->settings.hour12,124,60,28,false,0);
-        rect(122,108,160,1,1);
-        text(122,121,"日有所得",0);
+        rect(14,39,88,60,0);
+        add(20,43,t->day/10u,0,DRAW_LARGE,3);add(58,43,t->day%10u,0,DRAW_LARGE,3);
+        time_digits(t,f->settings.hour12,125,42,28,false,0);
+        text(127,81,"今日值得专注",0);
     }
+    if (f->focus_state==FOCUS_RUNNING || f->focus_state==FOCUS_PAUSED) {
+        char left[]="专注 00分";two(left+7,f->focus_minutes);text(14,106,left,0);
+    } else text(14,106,period,0);
+    temperature(f,202,106);
+    /* Daily progress is black/white only, advanced once per displayed minute. */
+    rect(14,127,268,1,0);rect(14,126,(t->hour*60u+t->minute)*268u/1440u,3,0);
+    centered(133,"K1设置   K2主题",0);
 }
-static void footer(const char *s) { rect(12,122,272,1,2);centered(131,s,0); }
-static void title(const char *s) { text(14,9,s,0);rect(12,30,272,1,1); }
+static void focus_page(const ClockFace *f)
+{
+    text(14,10,"专注计时",0);temperature(f,202,10);rect(14,32,268,1,0);
+    add(81,42,f->focus_minutes/10u,0,DRAW_LARGE,0);
+    add(122,42,f->focus_minutes%10u,0,DRAW_LARGE,0);
+    text(174, 74,"分钟",0);
+    const char *status=f->focus_state==FOCUS_RUNNING ? "保持专注" :
+        f->focus_state==FOCUS_PAUSED ? "已暂停" : f->focus_state==FOCUS_DONE ? "已完成  休息一下" : "选择时长后开始";
+    centered(103,status,0);
+    outline(14,123,268,5);rect(15,124,266u*f->focus_progress/100u,3,0);
+    centered(133,f->focus_state==FOCUS_RUNNING ? "K1重置 K2暂停 长按K1返回" :
+        f->focus_state==FOCUS_PAUSED ? "K1重置 K2继续 长按K1返回" :
+        f->focus_state==FOCUS_DONE ? "K2确认完成 长按K1返回" : "K1时长 K2开始 长按K1返回",0);
+}
+static void footer(const char *s) { rect(12,122,272,1,0);centered(131,s,0); }
+static void title(const char *s) { text(14,9,s,0);rect(12,30,272,1,0); }
 static void choice(unsigned y,const char *s,bool selected)
 {
     if (selected) rect(12,y-2,272,21,0);
@@ -141,11 +168,12 @@ static void prepare(const ClockFace *f)
         }
     } else if (f->page==PAGE_MENU) {
         title("设置");
-        static const char *items[]={"时间设置","日期设置","时间制式","定时反色","显示主题","保存返回"};
-        unsigned first=f->cursor<4 ? 0 : 2;
+        static const char *items[]={"时间设置","日期设置","时间制式","定时反色","显示主题","专注计时","保存返回"};
+        unsigned first=f->cursor<4 ? 0 : 3;
         for (unsigned i=first;i<first+4;++i) choice(39+(i-first)*21,items[i],i==f->cursor);
         footer("K1下一项  K2确认  长按K1返回");
-    } else if (f->page==PAGE_FORMAT) {
+    } else if (f->page==PAGE_FOCUS) focus_page(f);
+    else if (f->page==PAGE_FORMAT) {
         title("时间制式");
         choice(46,"24小时制",f->cursor==0);choice(79,"12小时制  上午/下午",f->cursor==1);
         footer("K1切换  K2保存  长按K1取消");
@@ -153,7 +181,7 @@ static void prepare(const ClockFace *f)
     else editor(f);
     if (f->error) {
         rect(0,122,296,30,3);
-        centered(131,f->error==1 ? "时钟异常" : "保存失败  请重新尝试",0);
+        centered(131,f->error==1 ? "时钟异常" : f->error==3 ? "正在保存  可长按返回" : "保存失败  请重新尝试",0);
     }
 }
 static void dimensions(const DrawOp *o,unsigned *w,unsigned *h)

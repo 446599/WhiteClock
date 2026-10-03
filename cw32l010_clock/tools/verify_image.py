@@ -33,7 +33,7 @@ manifest = {
     'static_ram_bytes': symbols['_ebss'] - 0x20000000,
     'minimum_stack_bytes': 1024,
     'original_sha256': original_hash,
-    'hardware_status': 'v3 candidate: not flashed; v1 remains installed',
+    'hardware_status': 'v4 desktop candidate: built; NOT flashed or hardware-validated',
     'debug_symbols': {n:symbols[n] for n in ['clock_stage','epd_successes','epd_failures','rtc_failures','key_overflows']}
 }
 (BUILD/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')

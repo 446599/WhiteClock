@@ -104,3 +104,38 @@ bool board_rtc_set(uint8_t h,uint8_t m)
     t.hour=h; t.minute=m;
     return board_rtc_save(&t,false);
 }
+
+/* Runtime save path: the main loop must never wait for a 1 Hz RTC window. */
+static struct { ClockTime time; uint32_t since; uint8_t state; bool date; } rtc_save;
+bool board_rtc_save_start(const ClockTime *t,bool date_only)
+{
+    if (rtc_save.state || !clock_time_valid(t) || !CW_RTC->CR0_f.START || !source_ready()) return false;
+    rtc_save.time=*t;rtc_save.date=date_only;
+    rtc_save.since=board_millis();rtc_save.state=1;
+    return true;
+}
+int board_rtc_save_poll(void)
+{
+    if (!rtc_save.state) return 0;
+    uint32_t now=board_millis();
+    if (!source_ready() || now-rtc_save.since>=1200u) {
+        unlock();CW_RTC->CR1_f.ACCESS=0;lock();rtc_save.state=0;return -1;
+    }
+    if (rtc_save.state==1) {
+        if (CW_RTC->CR1 & RTC_CR1_WAIT_Msk) return 0;
+        unlock();CW_RTC->CR1_f.ACCESS=1;rtc_save.since=now;rtc_save.state=2;
+    } else if (rtc_save.state==2) {
+        if (!(CW_RTC->CR1 & RTC_CR1_WINDOW_Msk)) return 0;
+        if (rtc_save.date) CW_RTC->DATE=clock_date_encode(&rtc_save.time);
+        else CW_RTC->TIME=clock_encode(rtc_save.time.hour,rtc_save.time.minute,0);
+        CW_RTC->CR1_f.ACCESS=0;lock();rtc_save.since=now;rtc_save.state=3;
+    } else {
+        if (CW_RTC->CR1 & RTC_CR1_WAIT_Msk) return 0;
+        ClockTime got;rtc_save.state=0;
+        if (!board_rtc_read_time(&got)) return -1;
+        bool ok=rtc_save.date ? (got.year==rtc_save.time.year && got.month==rtc_save.time.month && got.day==rtc_save.time.day) :
+            (got.hour==rtc_save.time.hour && got.minute==rtc_save.time.minute && got.second<2u);
+        return ok ? 1 : -1;
+    }
+    return 0;
+}

@@ -12,3 +12,6 @@
 # eide template
 *.ept
 *.eide-template
+
+# Generated from a pinned open pixel-font dependency
+/user/inc/ui_font.h
