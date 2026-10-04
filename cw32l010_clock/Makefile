@@ -78,3 +78,11 @@ test-spi: $(BUILD)/test_spi
 $(BUILD)/test_spi: tests/test_spi.c tests/fake_spi/main.h user/src/board.c user/src/clock_core.c user/src/clock_render.c user/inc/ui_font.h
 	@mkdir -p $(BUILD)
 	$(HOST_CC) -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=all -Itests/fake_spi -Iuser/inc $(filter %.c,$^) -o $@
+
+.PHONY: test-flip
+test: test-flip
+test-flip: $(BUILD)/test_flip
+	./$(BUILD)/test_flip
+$(BUILD)/test_flip: tests/test_flip.c user/src/clock_core.c user/src/clock_render.c user/inc/ui_font.h user/inc/clock_core.h
+	@mkdir -p $(BUILD)
+	$(HOST_CC) -std=c11 -Wall -Wextra -Werror -g -DCLOCK_RENDER_TEST -fsanitize=address,undefined -fno-sanitize-recover=all -Iuser/inc $(filter %.c,$^) -o $@

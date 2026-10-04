@@ -216,8 +216,22 @@ bool clock_face_equal(const ClockFace *a, const ClockFace *b)
 }
 bool clock_dither(uint8_t shade, unsigned x, unsigned y)
 {
-    /* 3x3 dispersed pattern gives exact 0, 1/3, 2/3, 1 coverage. */
-    return shade<3u && (shade==0u || ((x+2u*y)%3u) >= shade);
+    /* Fixed 4x4 ordered dithering: 100/87.5/12.5/0 percent black coverage.
+     * Logical coordinates anchor the pattern across columns, tiles and frames.
+     * No error buffer, temporal phase, extra refresh, or native-gray waveform. */
+    static const uint8_t bayer[4][4]={
+        {0,8,2,10}, {12,4,14,6}, {3,11,1,9}, {15,7,13,5}
+    };
+    static const uint8_t white[4]={0,2,14,16};
+    return shade<4u && bayer[y&3u][x&3u]>=white[shade];
+}
+bool clock_dither_pixel(uint8_t shade,unsigned x,unsigned y,bool inverted)
+{
+    /* shade is already visually inverted by clock_shade/render_column.
+     * Undo that inversion before dithering, then complement the final pixel.
+     * Inverting gray density alone would move the dots instead of inverting them. */
+    if (shade>3u) return false;
+    return inverted ? !clock_dither(3u-shade,x,y) : clock_dither(shade,x,y);
 }
 void clock_render_row(const ClockFace *f, unsigned y, uint8_t row[PANEL_ROW_BYTES])
 {
@@ -228,7 +242,7 @@ void clock_render_row(const ClockFace *f, unsigned y, uint8_t row[PANEL_ROW_BYTE
         for (unsigned bit=0;bit<8u;++bit) {
             unsigned x=i*8u+bit;
             /* Rotate 180 degrees from v1, matching the user's actual mounting. */
-            if (f && y<PANEL_HEIGHT && clock_dither(shades[x],295u-y,x))
+            if (f && y<PANEL_HEIGHT && clock_dither_pixel(shades[x],295u-y,x,f->inverted))
                 byte&=(uint8_t)~(0x80u>>bit);
         }
         row[i]=byte;

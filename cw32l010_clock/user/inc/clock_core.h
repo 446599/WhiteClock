@@ -58,6 +58,14 @@ bool clock_face_equal(const ClockFace *a, const ClockFace *b);
 /* Four luminance levels: 0 black, 1 dark gray, 2 light gray, 3 white. */
 uint8_t clock_shade(const ClockFace *face, unsigned x, unsigned y);
 void clock_render_column(const ClockFace *face, unsigned x, uint8_t shades[152]);
+/* Monochrome coverage: shades 0/1/2/3 contain 100/87.5/12.5/0 percent black. */
 bool clock_dither(uint8_t shade, unsigned x, unsigned y);
+/* Takes an already inverted logical shade, and preserves exact pixel inversion. */
+bool clock_dither_pixel(uint8_t shade,unsigned x,unsigned y,bool inverted);
+#ifdef CLOCK_RENDER_TEST
+bool clock_render_overflowed(void);
+bool clock_render_bounds_valid(void);
+unsigned clock_render_op_count(void);
+#endif
 void clock_render_row(const ClockFace *face, unsigned y, uint8_t row[PANEL_ROW_BYTES]);
 #endif

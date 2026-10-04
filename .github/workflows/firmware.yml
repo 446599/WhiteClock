@@ -31,6 +31,7 @@ jobs:
           make test
           python3 -m unittest discover -s tests -p 'test_device.py'
           python3 tools/preview_desktop.py
+          python3 tools/preview_flip.py
           python3 -c "import json,os,pathlib; p=pathlib.Path('build/clock/manifest.json'); m=json.loads(p.read_text()); m.update(source_commit=os.environ['GITHUB_SHA'],host_tests='passed'); p.write_text(json.dumps(m,indent=2)+'\n')"
       - name: Archive matching source (font build dependencies excluded)
         run: |
@@ -40,7 +41,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: desktop-clock-v4-${{ github.sha }}
+          name: desktop-clock-v4.1-${{ github.sha }}
           path: |
             source-snapshot.tar.gz
             cw32l010_clock/build/clock/clock.bin
@@ -49,5 +50,6 @@ jobs:
             cw32l010_clock/build/clock/clock.map
             cw32l010_clock/build/clock/manifest.json
             cw32l010_clock/design/desktop-v4.png
+            cw32l010_clock/design/flip-*.png
             cw32l010_clock/docs/
           retention-days: 30

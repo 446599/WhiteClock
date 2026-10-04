@@ -123,6 +123,23 @@ int main(void)
         uint8_t row[19];clock_render_row(&latest,y,row);
         for(unsigned i=0;i<19;++i) assert(wire_new[y*19+i]==(uint8_t)(row[i]^(EPD_PANEL_INVERT_DATA?255:0)));
     }
+    /* Dithered OLD/NEW planes use identical spatial phase and wire polarity.
+       Snapshot retargeting must not tear the new flip glyphs or background. */
+    f.settings.theme=1;f.inverted=0;
+    latest=f;latest.time.minute=(f.time.minute+1u)%60u;
+    assert(epd_start(&f,&latest,true));assert(finish(3000)==1);
+    for (unsigned y=0;y<PANEL_HEIGHT;++y) {
+        uint8_t old_row[19],new_row[19];
+        clock_render_row(&f,y,old_row);clock_render_row(&latest,y,new_row);
+        for (unsigned i=0;i<19;++i) {
+            assert(wire_old[y*19+i]==(uint8_t)(old_row[i]^(EPD_PANEL_INVERT_DATA?255:0)));
+            assert(wire_new[y*19+i]==(uint8_t)(new_row[i]^(EPD_PANEL_INVERT_DATA?255:0)));
+        }
+    }
+    f=latest;latest.inverted=1;fast=false;
+    assert(epd_start(&f,&latest,false));assert(finish(3000)==1);
+    for (unsigned i=0;i<5624;++i) assert((unsigned)(wire_old[i]^wire_new[i])==255u);
+    fast=true;
     busy=true; assert(epd_start(&f,&f,true)); assert(finish(21000)==-1); busy=false;
     fail_write=true; assert(epd_start(0,&f,false)); assert(finish(1000)==-1); fail_write=false;
     assert(!epd_active());

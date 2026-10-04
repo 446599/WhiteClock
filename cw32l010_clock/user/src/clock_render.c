@@ -1,18 +1,32 @@
 #include "clock_core.h"
 #include "ui_font.h"
 
-enum { DRAW_RECT, DRAW_SMALL, DRAW_LARGE, DRAW_MEDIUM };
+enum { DRAW_RECT, DRAW_SMALL, DRAW_LARGE, DRAW_MEDIUM,
+       DRAW_ROUND, DRAW_FLAP, DRAW_FLIP_DIGIT };
 typedef struct { uint16_t x,y,a,b; uint8_t kind,shade; } DrawOp;
 static DrawOp ops[112];
 static unsigned op_count;
 static ClockFace cached;
 static bool cache_valid;
+#ifdef CLOCK_RENDER_TEST
+static bool overflowed;
+#endif
 
 static void add(unsigned x,unsigned y,unsigned a,unsigned b,unsigned kind,unsigned shade)
 {
     if (op_count < sizeof ops/sizeof ops[0]) ops[op_count++]=(DrawOp){x,y,a,b,kind,shade};
+#ifdef CLOCK_RENDER_TEST
+    else overflowed=true;
+#endif
 }
 static void rect(unsigned x,unsigned y,unsigned w,unsigned h,unsigned shade) { add(x,y,w,h,DRAW_RECT,shade); }
+static void rounded(unsigned x,unsigned y,unsigned w,unsigned h,unsigned shade)
+{ add(x,y,w,h,DRAW_ROUND,shade); }
+#ifdef CLOCK_RENDER_TEST
+/* Tests inspect the real list budget, without reserving diagnostic RAM in firmware. */
+bool clock_render_overflowed(void) { return overflowed; }
+unsigned clock_render_op_count(void) { return op_count; }
+#endif
 static uint16_t next_char(const char **p)
 {
     const uint8_t *s=(const uint8_t *)*p;
@@ -69,8 +83,90 @@ static void temperature(const ClockFace *f,unsigned x,unsigned y)
     }
     text(x,y,value,0);
 }
+/* Original 16x28 geometric numerals, drawn on an integer grid. The flip theme
+ * doubles each bit to a 2x2 block (36x60 cell including a 2px margin).
+ * Solid glyph ink is never dithered; only the card material and shadow are. */
+static const uint16_t flip_digit_rows[10][28] = {
+    { /* 0 */
+        0x0000, 0x07f0, 0x0ff8, 0x3ffc, 0x7ffe, 0xfe1f, 0xf80f, 0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf00f,
+        0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf81f, 0x7ffe, 0x3ffc, 0x1ff8, 0x0ff0, 0x0000
+    },
+    { /* 1 */
+        0x0000, 0x0080, 0x01f0, 0x03f0, 0x0ff0, 0x1ff0, 0x0ff0, 0x0ef0, 0x04f0, 0x00f0, 0x00f0, 0x00f0, 0x00f0, 0x00f0,
+        0x00f0, 0x00f0, 0x00f0, 0x00f0, 0x00f0, 0x00f0, 0x00f0, 0x00f0, 0x00f0, 0x00f0, 0x1ffe, 0x1ffe, 0x1ffe, 0x1ffe
+    },
+    { /* 2 */
+        0x0000, 0x0ff0, 0x1ff8, 0x7ffc, 0xfffe, 0xf81f, 0xf00f, 0x000f, 0x000f, 0x001f, 0x001f, 0x003e, 0x007e, 0x007c,
+        0x00f8, 0x01f0, 0x03f0, 0x03e0, 0x07c0, 0x0f80, 0x1f80, 0x1f00, 0x3e00, 0x7c00, 0x7ffe, 0x7ffe, 0x3ffe, 0x3ffe
+    },
+    { /* 3 */
+        0x0000, 0x3ff0, 0x3ff8, 0x3ffc, 0x3ffe, 0x001f, 0x000f, 0x000f, 0x000f, 0x000f, 0x001f, 0x03fe, 0x03fc, 0x03f8,
+        0x03fc, 0x003e, 0x001f, 0x000f, 0x000f, 0x000f, 0x000f, 0x000f, 0x001f, 0x3ffe, 0x3ffc, 0x3ff8, 0x3ff0, 0x0000
+    },
+    { /* 4 */
+        0x0000, 0x0040, 0x00fc, 0x00fc, 0x01fc, 0x01fc, 0x03fc, 0x03fc, 0x07fc, 0x07bc, 0x0fbc, 0x0f3c, 0x1f3c, 0x1e3c,
+        0x3e3c, 0x3c3c, 0x7ffe, 0x3ffe, 0x3ffe, 0x3ffe, 0x003c, 0x003c, 0x003c, 0x003c, 0x003c, 0x003c, 0x003c, 0x0000
+    },
+    { /* 5 */
+        0x3ffe, 0x3ffe, 0x7ffe, 0x7ffe, 0x7800, 0x7800, 0x7800, 0x7800, 0x7800, 0x7800, 0x7800, 0x7800, 0x7ff0, 0x7ff8,
+        0x3ffc, 0x3ffe, 0x001f, 0x000f, 0x000f, 0x000f, 0x000f, 0x000f, 0x001f, 0x3ffe, 0x3ffc, 0x3ff8, 0x3ff0, 0x0000
+    },
+    { /* 6 */
+        0x03f8, 0x07f8, 0x0ff8, 0x1ff8, 0x1f00, 0x3e00, 0x7e00, 0x7c00, 0x7800, 0x7800, 0x7800, 0x7800, 0x7fe0, 0x7ff0,
+        0x7ff8, 0x7ffc, 0x783e, 0x781e, 0x781e, 0x781e, 0x781e, 0x781e, 0x781e, 0x7c3e, 0x3ffc, 0x1ff8, 0x0ff0, 0x07e0
+    },
+    { /* 7 */
+        0x0000, 0x7ffe, 0x7fff, 0x7fff, 0x7fff, 0x000f, 0x001f, 0x001e, 0x001e, 0x003e, 0x003c, 0x003c, 0x007c, 0x0078,
+        0x00f8, 0x00f0, 0x00f0, 0x01f0, 0x01e0, 0x01e0, 0x03e0, 0x03c0, 0x03c0, 0x07c0, 0x0780, 0x0080, 0x0000, 0x0000
+    },
+    { /* 8 */
+        0x0000, 0x0ff0, 0x1ff8, 0x3ffc, 0x7ffe, 0xf81f, 0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf81f, 0x7ffe, 0x3ffc, 0x1ff8,
+        0x3ffc, 0x7ffe, 0xf81f, 0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf00f, 0xf81f, 0x7ffe, 0x3ffc, 0x1ff8, 0x0ff0, 0x0000
+    },
+    { /* 9 */
+        0x07e0, 0x0ff0, 0x1ff8, 0x3ffc, 0x7c3e, 0x781e, 0x781e, 0x781e, 0x781e, 0x781e, 0x781e, 0x7c1e, 0x3ffe, 0x1ffe,
+        0x0ffe, 0x07fe, 0x001e, 0x001e, 0x001e, 0x001e, 0x003e, 0x007e, 0x007c, 0x00f8, 0x3ff8, 0x3ff0, 0x3fe0, 0x3fc0
+    },
+};
+
+static void flip_card(unsigned x,unsigned value)
+{
+    const unsigned y=31, w=126, h=78;
+    /* A fixed spatial texture: old/new frames reconstruct identical shadows. */
+    rounded(x+3,y+5,w,h,2);             /* dispersed drop shadow */
+    rounded(x,y+2,w,h,0);               /* stacked lower leaf */
+    add(x,y,w,h,DRAW_FLAP,1);           /* charcoal upper leaf, black lower */
+    rect(x+6,y+1,w-12,1,2);             /* bevel, kept away from the corners */
+    rect(x+6,y+h-2,w-12,1,1);
+    add(x+21,y+9,value/10u,0,DRAW_FLIP_DIGIT,3);
+    add(x+69,y+9,value%10u,0,DRAW_FLIP_DIGIT,3);
+    rect(x+1,y+39,w-2,1,0);             /* physical split, not a gray numeral */
+    for (unsigned side=0;side<2;++side) {
+        unsigned hx=x+(side?w-4:0);
+        rounded(hx,y+34,4,11,0);        /* hinge/axle */
+        rect(hx+1,y+36,2,5,2);
+        rect(hx+1,y+36,1,3,3);
+    }
+}
+static void flip_home(const ClockFace *f)
+{
+    char date[32];date_text(date,&f->time);
+    text(14,8,date,0);text(234,8,weekdays[clock_weekday(&f->time)],0);
+    flip_card(12,clock_display_hour(f->time.hour,f->settings.hour12));
+    flip_card(158,f->time.minute);
+    rounded(146,57,4,4,0);rounded(146,80,4,4,0);
+    if (f->focus_state==FOCUS_RUNNING || f->focus_state==FOCUS_PAUSED) {
+        char left[]="专注 00分";two(left+7,f->focus_minutes);text(14,120,left,0);
+        if (f->focus_state==FOCUS_PAUSED) text(110,120,"暂停",0);
+    } else text(14,120,f->settings.hour12 ? (f->time.hour<12 ? "上午" : "下午") : "24小时制",0);
+    temperature(f,202,120);
+    /* The ornament view omits persistent button help; theme selection keeps it. */
+    rect(14,143,268,2,2);
+    rect(14,143,(f->time.hour*60u+f->time.minute)*268u/1440u,2,0);
+}
 static void home(const ClockFace *f)
 {
+    if (f->settings.theme==1) { flip_home(f);return; }
     const ClockTime *t=&f->time;
     char date[32];date_text(date,t);
     const char *period=f->settings.hour12 ? (t->hour<12 ? "上午" : "下午") : "24小时制";
@@ -78,15 +174,6 @@ static void home(const ClockFace *f)
     rect(14,32,268,1,0);
     if (f->settings.theme==0) {
         time_digits(t,f->settings.hour12,47,41,41,true,0);
-    } else if (f->settings.theme==1) {
-        unsigned h=clock_display_hour(t->hour,f->settings.hour12);
-        const uint8_t d[]={h/10u,h%10u,t->minute/10u,t->minute%10u};
-        static const uint8_t xs[]={18,76,170,228};
-        for (unsigned i=0;i<4;++i) {
-            outline(xs[i],39,50,60);
-            add(xs[i]+6,43,d[i],0,DRAW_LARGE,0);
-        }
-        rect(145,57,5,5,0);rect(145,79,5,5,0);
     } else {
         rect(14,39,88,60,0);
         add(20,43,t->day/10u,0,DRAW_LARGE,3);add(58,43,t->day%10u,0,DRAW_LARGE,3);
@@ -160,6 +247,9 @@ static void prepare(const ClockFace *f)
 {
     if (cache_valid && clock_face_equal(&cached,f)) return;
     cached=*f;cache_valid=true;op_count=0;
+#ifdef CLOCK_RENDER_TEST
+    overflowed=false;
+#endif
     if (f->page==PAGE_HOME || f->page==PAGE_THEME) {
         home(f);
         if (f->page==PAGE_THEME) {
@@ -186,18 +276,45 @@ static void prepare(const ClockFace *f)
 }
 static void dimensions(const DrawOp *o,unsigned *w,unsigned *h)
 {
-    if (o->kind==DRAW_RECT) { *w=o->a;*h=o->b; }
+    if (o->kind==DRAW_RECT || o->kind==DRAW_ROUND || o->kind==DRAW_FLAP) { *w=o->a;*h=o->b; }
+    else if(o->kind==DRAW_FLIP_DIGIT) { *w=36;*h=60; }
     else if(o->kind==DRAW_SMALL) { *w=small_glyphs[o->a].width;*h=16; }
     else if(o->kind==DRAW_LARGE) { *w=38;*h=52; }
     else { *w=24;*h=32; }
 }
+#ifdef CLOCK_RENDER_TEST
+bool clock_render_bounds_valid(void)
+{
+    for (unsigned i=0;i<op_count;++i) {
+        unsigned w,h;dimensions(&ops[i],&w,&h);
+        if ((unsigned)ops[i].x+w>UI_WIDTH || (unsigned)ops[i].y+h>UI_HEIGHT) return false;
+    }
+    return true;
+}
+#endif
 static bool ink(const DrawOp *o,unsigned x,unsigned y)
 {
     if (o->kind==DRAW_RECT) return true;
+    if (o->kind==DRAW_ROUND || o->kind==DRAW_FLAP) {
+        /* Four stepped corner pixels, clamped for the small hinges and colon. */
+        unsigned r=o->a<8 || o->b<8 ? 1u : 4u;
+        unsigned edge=y<o->b-1u-y ? y : o->b-1u-y;
+        static const uint8_t inset[]={4,2,1,1};
+        unsigned cut=edge<r ? (r==1 ? 1u : inset[edge]) : 0u;
+        return x>=cut && x<o->a-cut;
+    }
+    if (o->kind==DRAW_FLIP_DIGIT) {
+        if (o->a>=10 || x<2 || x>=34 || y<2 || y>=58) return false;
+        return (flip_digit_rows[o->a][(y-2)/2] & (0x8000u>>((x-2)/2)))!=0;
+    }
     if (o->kind==DRAW_SMALL) return (small_glyphs[o->a].rows[y] & (0x8000u>>x))!=0;
     const uint8_t *data=o->kind==DRAW_LARGE ? large_digits[o->a] : medium_digits[o->a];
     unsigned stride=o->kind==DRAW_LARGE?5u:3u;
     return (data[y*stride+x/8u]&(0x80u>>(x%8u)))!=0;
+}
+static uint8_t op_shade(const DrawOp *o,unsigned y)
+{
+    return o->kind==DRAW_FLAP && y>=o->b/2 ? 0u : o->shade;
 }
 uint8_t clock_shade(const ClockFace *f,unsigned x,unsigned y)
 {
@@ -205,7 +322,7 @@ uint8_t clock_shade(const ClockFace *f,unsigned x,unsigned y)
     prepare(f);uint8_t value=3;
     for (unsigned i=0;i<op_count;++i) {
         DrawOp *o=&ops[i];unsigned w,h;dimensions(o,&w,&h);
-        if (x>=o->x && x<o->x+w && y>=o->y && y<o->y+h && ink(o,x-o->x,y-o->y)) value=o->shade;
+        if (x>=o->x && x<o->x+w && y>=o->y && y<o->y+h && ink(o,x-o->x,y-o->y)) value=op_shade(o,y-o->y);
     }
     return f->inverted?3u-value:value;
 }
@@ -218,7 +335,7 @@ void clock_render_column(const ClockFace *f,unsigned x,uint8_t shades[152])
         DrawOp *o=&ops[i];unsigned w,h;dimensions(o,&w,&h);
         if (x<o->x || x>=o->x+w) continue;
         for (unsigned y=o->y;y<o->y+h && y<152;++y)
-            if (ink(o,x-o->x,y-o->y)) shades[y]=o->shade;
+            if (ink(o,x-o->x,y-o->y)) shades[y]=op_shade(o,y-o->y);
     }
     if (f->inverted) for (unsigned y=0;y<152;++y) shades[y]=3u-shades[y];
 }

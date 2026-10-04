@@ -1,5 +1,7 @@
 # CW32L010 桌面墨水屏时钟 · v4 候选版
 
+当前开发分支新增 **v4.1 抖动翻页主题**：双翻页卡片、颗粒灰阶、几何像素数字和精确夜间反色，操作与实机验收说明见 [FLIP-CLOCK.md](docs/FLIP-CLOCK.md)。
+
 开发分支 `codex/desktop-clock-v4`，基于 v3 提交 `091ce0f`。**尚未烧录或实机验收**。原始恢复镜像、主分支和历史烧录记录保持不变。
 
 ## 本版内容
@@ -27,6 +29,7 @@ make test
 python3 tools/verify_image.py
 python3 -m unittest discover -s tests -p 'test_device.py'
 python3 tools/preview_desktop.py
+python3 tools/preview_flip.py
 ```
 
 需要 ARM GCC、Python、Pillow 和 pyocd；首次构建需要网络获取固定版本点阵依赖，随后可缓存。
