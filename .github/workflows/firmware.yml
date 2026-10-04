@@ -32,11 +32,17 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_device.py'
           python3 tools/preview_desktop.py
           python3 -c "import json,os,pathlib; p=pathlib.Path('build/clock/manifest.json'); m=json.loads(p.read_text()); m.update(source_commit=os.environ['GITHUB_SHA'],host_tests='passed'); p.write_text(json.dumps(m,indent=2)+'\n')"
+      - name: Archive matching source (font build dependencies excluded)
+        run: |
+          tar --exclude='*/build' --exclude='*/releases' --exclude='*/design' \
+              --exclude='*/.pack' --exclude='*/ui_font.h' --exclude='*/__pycache__' \
+              -czf source-snapshot.tar.gz cw32l010_clock cw32l010_original_64k.bin README.md .github/workflows/firmware.yml
       - uses: actions/upload-artifact@v4
         if: success()
         with:
           name: desktop-clock-v4-${{ github.sha }}
           path: |
+            source-snapshot.tar.gz
             cw32l010_clock/build/clock/clock.bin
             cw32l010_clock/build/clock/clock.hex
             cw32l010_clock/build/clock/clock.elf
