@@ -23,8 +23,6 @@ theme-assets: user/inc/ui_font.h
 	$(PYTHON) tools/make_theme_assets.py
 user/inc/ui_font.h: tools/make_fonts.py user/src/clock_render.c user/src/clock_theme.c
 	$(PYTHON) tools/make_fonts.py
-user/inc/theme_assets.h: tools/make_theme_assets.py tools/theme_study.py tools/theme_memory.py tools/theme_selected_memory.py | user/inc/ui_font.h
-	$(PYTHON) tools/make_theme_assets.py
 $(BUILD)/user/src/clock_theme.o: user/inc/theme_assets.h
 $(OBJECTS): | user/inc/ui_font.h
 

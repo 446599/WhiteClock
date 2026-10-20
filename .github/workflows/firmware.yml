@@ -24,15 +24,13 @@ jobs:
         working-directory: cw32l010_clock
         run: |
           make fonts
-          make theme-assets
           make -j2
           python tools/verify_image.py
       - name: Host regression tests
         working-directory: cw32l010_clock
         run: |
           make -j2 test HOST_CC='cc -O2'
-          python -m unittest discover -s tests -p 'test_device.py'
-          python -m unittest discover -s tests -p 'test_theme_assets.py'
+          python -m unittest discover -s tests -p 'test_*.py'
           python tools/preview_desktop.py --output-dir build/preview
           python -c "import json,os,pathlib; p=pathlib.Path('build/clock/manifest.json'); m=json.loads(p.read_text()); m.update(source_commit=os.environ['GITHUB_SHA'],host_tests='passed'); p.write_text(json.dumps(m,indent=2)+'\n')"
       - name: Archive matching source without local build caches

@@ -6,7 +6,9 @@
   "static_ram_bytes": 2572,
   "minimum_stack_bytes": 1024,
   "original_sha256": "0f92f36672594320223d3a23815bd04f864b1163875ef61d41a2460bd0c80c71",
-  "hardware_status": "Installed; full 64 KiB readback verified 2026-10-20 17:02 after interrupted USB session. Original settings/tail preserved. Startup refresh successful. User confirmed noticeably faster response and BACK returns while held.",
+  "project": "WhiteClock",
+  "version": "1.0.0",
+  "hardware_status": "Reference-device full 64 KiB readback verified. Programming another device requires its own backup and complete verification.",
   "recovery_evidence": "../../../evidence/recovery_20261020_170205.json",
   "verified_full_flash_sha256": "2c71c13673301bdc95b55560055d5e0757a1d5aba0a17c9fd7c2b138ce08120d",
   "debug_symbols": {

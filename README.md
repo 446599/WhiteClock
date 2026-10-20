@@ -2,7 +2,9 @@
 
 基于 CW32L010F8U6 的 2.66 英寸黑白墨水屏桌面时钟，支持七套抖动主题、两键设置、定时反色和番茄钟。
 
-当前版本 **WhiteClock V1.0** 已完成实机烧录和 64 KiB 整片回读。用户确认显示正常、主题切换明显变快，按住 BACK 即可返回。
+**WhiteClock V1.0.0** 面向 CW32L010F8U6 / 152 × 296 黑白墨水屏硬件。刷写前请核对主控型号、屏幕接口和电气连接，不同批次设备不保证兼容。
+
+[烧录教程](cw32l010_clock/docs/FLASHING.md) · [AI 烧录交接文本](cw32l010_clock/docs/AI-FLASHING-HANDOFF.md) · [工程指南](cw32l010_clock/README.md)
 
 ![WhiteClock 七套主题，来自固件渲染器的预览，非设备实拍](cw32l010_clock/docs/images/themes.png)
 
@@ -39,7 +41,7 @@ BACK 按住约 **0.7 秒**就触发返回，不必松手。可编辑数字的 SE
 | 屏幕协议 | 按 UC8251 单字节 PSR 驱动，保留原机 LUT |
 | SPI | PA5 SCK / PA6 MOSI，6 MHz；BUSY PA1 / RST PA2 / CS PA3 / DC PA4 |
 | 按键 | BACK PB2（原 K1）/ SET PB3（原 K2），低有效 |
-| 调试 | SWD PA7 / PA8，使用 WCH-Link |
+| 调试 | SWDIO PA7 / SWCLK PA8，使用兼容的 SWD 烧录器 |
 | RTC | 外部 32768 Hz LSE |
 
 ## 刷新与容量
@@ -48,14 +50,19 @@ BACK 按住约 **0.7 秒**就触发返回，不必松手。可编辑数字的 SE
 
 主题资源按面板扫描顺序存储，背景整字节复制，字形按列读取，背景和字体各用 512 字节解码缓存，不分配全屏帧缓冲。SPI、屏幕等待、ADC 和运行时 RTC 保存分步执行，按键优先处理。
 
-| V1.0 已安装镜像 | 用量 |
+| V1.0 发布镜像 | 用量 |
 |---|---|
 | 程序 Flash | 61,252 / 64,000 字节，剩余 2,748 字节 |
 | 静态 RAM | 2,572 / 4,096 字节，至栈顶余 1,524 字节 |
 | 设置页 | `0xFA00` / `0xFC00`，双页 CRC；不擦写 `0xFE00` 安全页 |
-| 启动刷新记录 | 1,845 ms，其中 BUSY 1,042 ms；不是菜单响应时间 |
 
-当前固件、校验清单和字体许可见 [V1.0 产物](cw32l010_clock/releases/whiteclock-v1-fast-20261020/)。[版本状态](cw32l010_clock/releases/status.json)记录镜像哈希、整片回读和验收范围。
+固件、镜像校验清单和字体许可见 [V1.0 产物](cw32l010_clock/releases/whiteclock-v1-fast-20261020/)。[版本索引](cw32l010_clock/releases/status.json)记录镜像哈希和容量；每台设备刷写后都需要单独回读验证。
+
+## 烧录
+
+准备兼容的 SWD 烧录器和稳定接线，按[烧录教程](cw32l010_clock/docs/FLASHING.md)核对设备并备份。也可以将 [AI 烧录交接文本](cw32l010_clock/docs/AI-FLASHING-HANDOFF.md)交给具有本机操作能力的 AI，补充设备照片、电脑系统及烧录器信息后，由 AI 按受保护流程协助操作。
+
+接线核心为 `SWDIO → PA7`、`SWCLK → PA8`、`GND → GND`。供电、电平及焊盘顺序必须根据实际板卡确认；不要直接照搬其他设备的插针排列。
 
 ## 开发
 
@@ -73,7 +80,7 @@ make test HOST_CC='cc -O2'
 python -m unittest discover -s tests -p 'test_device.py'
 ```
 
-首次构建会下载固定哈希的 GNU Unifont，后续可使用本地缓存。正式版本的主题资源头文件已随源码提供；重生成主题、逐像素资源验证、预览和安全烧录见 [工程指南](cw32l010_clock/README.md)。自动构建也会运行对应验证并上传固件、源码快照和预览。
+首次构建会下载固定哈希的 GNU Unifont，后续可使用本地缓存。正式版主题资源和独立像素参考随源码提供，普通构建不重新栅格化字体。重生成资源、逐像素验证和预览见[工程指南](cw32l010_clock/README.md)。自动构建会验证源码中的固定资源，并上传固件、源码快照和预览。
 
 ## 目录
 

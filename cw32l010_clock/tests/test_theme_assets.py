@@ -1,5 +1,6 @@
 """Compare MCU resource decoding and glyph dilation against independent bitmaps."""
 import ctypes
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -9,7 +10,7 @@ import unittest
 from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = ROOT / "build/theme-assets"
+ASSETS = ROOT / "tests/fixtures/theme-assets"
 
 
 class ResourceTest(unittest.TestCase):
@@ -27,7 +28,11 @@ class ResourceTest(unittest.TestCase):
         cls.lib.clock_theme_mask.restype = ctypes.c_uint64
         cls.images = {}
         for item in json.loads((ASSETS / "manifest.json").read_text()):
-            cls.images[item["id"]] = Image.open(ASSETS / f"{item['id']:02d}-{item['name']}.png").copy()
+            with Image.open(ASSETS / f"{item['id']:02d}-{item['name']}.png") as source:
+                image = source.copy()
+            if list(image.size) != item["size"] or hashlib.sha256(image.tobytes()).hexdigest() != item["sha256"]:
+                raise AssertionError(f"Reference image integrity failure: {item['name']}")
+            cls.images[item["id"]] = image
 
     @classmethod
     def tearDownClass(cls):

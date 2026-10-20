@@ -1,7 +1,8 @@
 {
   "project": "WhiteClock",
-  "version": "1.0",
-  "installed": {
+  "version": "1.0.0",
+  "release": {
+    "tag": "v1.0.0",
     "file": "whiteclock-v1-fast-20261020/clock.bin",
     "manifest": "whiteclock-v1-fast-20261020/manifest.json",
     "sha256": "4168abefc0c78b3616b113c409ae1da52b4ca56960b43bac1fb335b787d578a5",
@@ -9,75 +10,33 @@
     "static_ram_bytes": 2572,
     "stack_space_bytes": 1524,
     "application_free_bytes": 2748,
-    "flashed": true,
-    "readback_verified": true,
-    "verified_at": "2026-10-20T17:02:05+08:00",
-    "full_flash_sha256": "2c71c13673301bdc95b55560055d5e0757a1d5aba0a17c9fd7c2b138ce08120d",
+    "flash_origin": 0,
+    "application_limit": 64000,
+    "settings_pages": ["0xFA00", "0xFC00"],
+    "safety_page": "0xFE00"
+  },
+  "hardware": {
+    "chip": "CW32L010F8U6",
+    "flash_bytes": 65536,
+    "ram_bytes": 4096,
+    "pins": 20,
+    "panel_width": 152,
+    "panel_height": 296
+  },
+  "reference_validation": {
+    "scope": "Reference-device readback only; not a substitute for verification on another device.",
     "evidence": "evidence/recovery_20261020_170205.json",
-    "settings_preserved": true,
-    "visual_and_buttons": "User confirmed normal display, noticeably faster response and BACK returns while held.",
-    "runtime": {
-      "first_refresh_ms": 1845,
-      "new_image_ms": 562,
-      "busy_ms": 1042,
-      "epd_successes": 1,
-      "epd_failures": 0,
-      "rtc_failures": 0,
-      "key_overflows": 0
-    }
-  },
-  "chip": "CW32L010F8U6",
-  "flash_bytes": 65536,
-  "ram_bytes": 4096,
-  "pins": 20,
-  "legacy_installed_v3": {
-    "file": "clock-v3-ui-installed.bin",
-    "sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51",
-    "bytes": 18124,
-    "flashed": true,
-    "cold_start_clock": "LSE, 32768 Hz external crystal",
-    "gray_output": "black-white dithering; native four-gray waveform unverified",
-    "settings_pages": [
-      "0xFA00",
-      "0xFC00"
-    ],
-    "full_flash_sha256": "a6cb47b8c66bc95aa9ba16fdb7916d18e1a28fea146ea6a18882391e67381003",
     "readback_verified": true,
-    "runtime": {
-      "clock_stage": 4,
-      "epd_successes": 1,
-      "epd_failures": 0,
-      "rtc_failures": 0,
-      "key_overflows": 0,
-      "rtc_time": "0x120003",
-      "cpu_state": "State.SLEEPING"
-    },
-    "evidence": "evidence/device_20261004_032432.json",
-    "visual_and_buttons": "awaiting user confirmation"
+    "full_flash_sha256": "2c71c13673301bdc95b55560055d5e0757a1d5aba0a17c9fd7c2b138ce08120d"
   },
-  "legacy_candidate_v3": {
-    "file": "clock-v3-ui-candidate.bin",
-    "sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51",
-    "bytes": 18124,
-    "flashed": true,
-    "cold_start_clock": "LSE, 32768 Hz external crystal",
-    "gray_output": "black-white dithering; native four-gray waveform unverified",
-    "settings_pages": [
-      "0xFA00",
-      "0xFC00"
-    ]
-  },
-  "remaining": "V1.0 installed and full readback verified; response and held-key return accepted by user. Long-term ghosting, power consumption, temperature range and hardware stack watermark are not comprehensively measured. Native four-gray remains unverified.",
-  "previous_installed": {
-    "file": "clock-v1-installed.bin",
-    "sha256": "abd4ed6e6603ee154565437c7dc70452b4fdec6ae35f3ea315645ffb120565ed",
-    "bytes": 4972,
-    "full_flash_sha256": "153c111b44d466e5bec946a0ea0cae5ba18d4e49a1915d82680dfd18ace4ff22",
-    "readback_verified": true,
-    "first_refresh_successes": 1,
-    "epd_failures": 0,
-    "rtc_failures": 0,
-    "visual_and_buttons": "User reports upside-down display and slow/missed keys; addressed in unflashed v3 candidate",
-    "cold_start_clock": "LSI, running original LSE is retained"
-  }
+  "historical_images": [
+    {"file": "clock-v3-ui-installed.bin", "bytes": 18124, "sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51"},
+    {"file": "clock-v1-installed.bin", "bytes": 4972, "sha256": "abd4ed6e6603ee154565437c7dc70452b4fdec6ae35f3ea315645ffb120565ed"}
+  ],
+  "limitations": [
+    "Hardware variants and temperature range are not comprehensively qualified.",
+    "Long-term ghosting, power consumption and hardware stack watermark are not fully measured.",
+    "Dithering is spatial black-and-white, not native grayscale.",
+    "Focus timer state is not retained across reset; chip temperature is not calibrated ambient temperature."
+  ]
 }
