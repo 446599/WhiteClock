@@ -111,7 +111,8 @@ void test_wait(void)
 }
 int main(void)
 {
-    for (unsigned scenario=0;scenario<CASE_COUNT;++scenario) {
+    /* Preserve the case index across the longjmp that ends each firmware run. */
+    for (volatile unsigned scenario=0;scenario<CASE_COUNT;++scenario) {
         memset(&test,0,sizeof test);test.scenario=scenario;
         epd_successes=epd_failures=rtc_failures=main_loop_max_ms=epd_poll_max_ms=0;
         if (!setjmp(done)) firmware_main();
