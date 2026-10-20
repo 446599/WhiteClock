@@ -1,8 +1,0 @@
-user/src/board.c:10:6:SysTick_Handler	24	static
-user/src/board.c:25:9:board_key	0	static
-user/src/board.c:32:10:board_millis	0	static
-user/src/board.c:33:6:board_delay	0	static
-user/src/board.c:38:6:board_epd_busy	0	static
-user/src/board.c:39:6:board_epd_reset	0	static
-user/src/board.c:41:6:board_epd_write	16	static
-user/src/board.c:63:6:board_init	64	static

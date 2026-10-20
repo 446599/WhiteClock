@@ -1,9 +1,36 @@
 {
+  "project": "WhiteClock",
+  "version": "1.0",
+  "installed": {
+    "file": "whiteclock-v1-fast-20261020/clock.bin",
+    "manifest": "whiteclock-v1-fast-20261020/manifest.json",
+    "sha256": "4168abefc0c78b3616b113c409ae1da52b4ca56960b43bac1fb335b787d578a5",
+    "bytes": 61252,
+    "static_ram_bytes": 2572,
+    "stack_space_bytes": 1524,
+    "application_free_bytes": 2748,
+    "flashed": true,
+    "readback_verified": true,
+    "verified_at": "2026-10-20T17:02:05+08:00",
+    "full_flash_sha256": "2c71c13673301bdc95b55560055d5e0757a1d5aba0a17c9fd7c2b138ce08120d",
+    "evidence": "evidence/recovery_20261020_170205.json",
+    "settings_preserved": true,
+    "visual_and_buttons": "User confirmed normal display, noticeably faster response and BACK returns while held.",
+    "runtime": {
+      "first_refresh_ms": 1845,
+      "new_image_ms": 562,
+      "busy_ms": 1042,
+      "epd_successes": 1,
+      "epd_failures": 0,
+      "rtc_failures": 0,
+      "key_overflows": 0
+    }
+  },
   "chip": "CW32L010F8U6",
   "flash_bytes": 65536,
   "ram_bytes": 4096,
   "pins": 20,
-  "installed": {
+  "legacy_installed_v3": {
     "file": "clock-v3-ui-installed.bin",
     "sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51",
     "bytes": 18124,
@@ -28,7 +55,7 @@
     "evidence": "evidence/device_20261004_032432.json",
     "visual_and_buttons": "awaiting user confirmation"
   },
-  "candidate": {
+  "legacy_candidate_v3": {
     "file": "clock-v3-ui-candidate.bin",
     "sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51",
     "bytes": 18124,
@@ -40,7 +67,7 @@
       "0xFC00"
     ]
   },
-  "remaining": "v3 installed, full readback and first refresh verified. Visual orientation, buttons and settings persistence require physical validation. Native four-gray remains unverified.",
+  "remaining": "V1.0 installed and full readback verified; response and held-key return accepted by user. Long-term ghosting, power consumption, temperature range and hardware stack watermark are not comprehensively measured. Native four-gray remains unverified.",
   "previous_installed": {
     "file": "clock-v1-installed.bin",
     "sha256": "abd4ed6e6603ee154565437c7dc70452b4fdec6ae35f3ea315645ffb120565ed",

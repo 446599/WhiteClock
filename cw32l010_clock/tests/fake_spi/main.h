@@ -2,14 +2,16 @@
 #define FAKE_SPI_MAIN_H
 #include <stdint.h>
 typedef struct { uint32_t ISR; } FakeSPI;
-typedef struct { uint32_t IDR; } FakeGPIO;
+typedef struct { uint32_t IDR, ISR, ICR, RISEIE, FALLIE, FILTER; } FakeGPIO;
 extern FakeSPI fake_spi;
 extern FakeGPIO fake_gpio;
 extern unsigned fake_cs;
-#define CW_SPI (&fake_spi)
+FakeSPI *fake_spi_device(void);
+#define CW_SPI fake_spi_device()
 #define CW_GPIOB (&fake_gpio)
 #define CW_GPIOA (&fake_gpio)
 #define GPIO_PIN_2 (1u<<2)
+#define GPIO_PIN_3 (1u<<3)
 #define SPI_FLAG_TXE 1u
 #define SPI_FLAG_BUSY 2u
 void SPI_SendData(FakeSPI *spi,uint8_t data);
@@ -30,12 +32,19 @@ void SPI_SendData(FakeSPI *spi,uint8_t data);
 #define EPD_SPI_SCK_PIN 32
 #define EPD_SPI_MOSI_PIN 64
 #define EPD_BUSY_PIN 2
-#define BUTTON_SET_PIN 4
-#define BUTTON_UP_PIN 8
 #define GPIO_MODE_OUTPUT_PP 1
 #define GPIO_MODE_INPUT 2
 #define GPIO_MODE_INPUT_PULLUP 3
-typedef struct { unsigned Pins,Mode; } GPIO_InitTypeDef;
+typedef struct { unsigned Pins,Mode,IT; } GPIO_InitTypeDef;
+#define GPIO_IT_RISING 0x81u
+#define GPIO_IT_FALLING 0x82u
+#define GPIO_FLTCLK_HCLK8 0x00020000u
+#define GPIOB_INTFLAG_CLR(mask) ((void)(mask))
+#define GPIOB_IRQn 6
+#define NVIC_ClearPendingIRQ(x) ((void)(x))
+#define NVIC_SetPriority(x,p) ((void)(x),(void)(p))
+#define NVIC_EnableIRQ(x) ((void)(x))
+#define GPIO_ConfigFilter(a,b,c) ((void)(a),(void)(b),(void)(c))
 #define GPIO_Init(a,b) ((void)(a),(void)(b))
 #define PA05_AFx_SPI1SCK() ((void)0)
 #define PA06_AFx_SPI1MOSI() ((void)0)
@@ -46,6 +55,7 @@ typedef struct { int a,b,c,d,e,f,g,h,i; } SPI_InitTypeDef;
 #define SPI_CPOL_Low 0
 #define SPI_CPHA_1Edge 0
 #define SPI_NSS_Soft 0
+#define SPI_BaudRatePrescaler_4 0
 #define SPI_BaudRatePrescaler_8 0
 #define SPI_FirstBit_MSB 0
 #define SPI_Speed_Low 0

@@ -7,7 +7,9 @@
 #define PANEL_ROW_BYTES 19u
 #define UI_WIDTH 296u
 #define UI_HEIGHT 152u
-#define THEME_COUNT 3u
+#define THEME_COUNT 7u
+#define MENU_ITEM_COUNT 6u
+#define FOCUS_ALERT_FLASHES 5u
 
 typedef struct { uint8_t year, month, day, hour, minute, second; } ClockTime;
 typedef struct {
@@ -33,7 +35,7 @@ typedef struct {
     ClockSettings settings, draft_settings;
     uint8_t page, cursor, error;
     int8_t temperature_c;
-    uint8_t temperature_valid, focus_state, focus_preset;
+    uint8_t temperature_valid, focus_state, focus_preset, focus_return_page, focus_alert_remaining;
     uint32_t focus_remaining_ms, focus_tick;
 } ClockUI;
 
@@ -48,7 +50,8 @@ uint8_t clock_display_hour(uint8_t hour, bool hour12);
 bool clock_inverted(const ClockSettings *settings, const ClockTime *time);
 ClockSettings clock_defaults(void);
 bool clock_settings_valid(const ClockSettings *settings);
-uint8_t clock_button_sample(ClockButton *button, bool pressed, bool is_ok, uint32_t now);
+/* SET uses is_set=true (press confirms); BACK uses false. */
+uint8_t clock_button_sample(ClockButton *button, bool pressed, bool is_set, uint32_t now);
 void clock_ui_init(ClockUI *ui, const ClockTime *time, const ClockSettings *settings);
 uint8_t clock_ui_key(ClockUI *ui, uint8_t key);
 void clock_ui_saved(ClockUI *ui, bool success);
@@ -58,6 +61,13 @@ bool clock_face_equal(const ClockFace *a, const ClockFace *b);
 /* Four luminance levels: 0 black, 1 dark gray, 2 light gray, 3 white. */
 uint8_t clock_shade(const ClockFace *face, unsigned x, unsigned y);
 void clock_render_column(const ClockFace *face, unsigned x, uint8_t shades[152]);
+void clock_render_column_span(const ClockFace *face,unsigned x,unsigned first,
+                              unsigned end,uint8_t shades[152]);
 bool clock_dither(uint8_t shade, unsigned x, unsigned y);
 void clock_render_row(const ClockFace *face, unsigned y, uint8_t row[PANEL_ROW_BYTES]);
+/* Inclusive physical panel coordinates; x is aligned to complete bytes. */
+typedef struct { uint16_t x0,x1,y0,y1; } ClockWindow;
+bool clock_changed_window(const ClockFace *old,const ClockFace *next,ClockWindow *window);
+void clock_render_row_span(const ClockFace *face,unsigned y,unsigned first_byte,
+                           unsigned byte_count,uint8_t *row);
 #endif

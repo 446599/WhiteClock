@@ -28,6 +28,14 @@ int main(void)
     assert(settings_save(&b));equal(settings_load(),b);
     unsigned count=erases;assert(settings_save(&b));assert(erases==count);
     c.hour12=1;assert(settings_save(&c));equal(settings_load(),c);
+    for (unsigned theme=0;theme<THEME_COUNT;++theme) {
+        c.theme=theme;
+        assert(settings_save(&c));equal(settings_load(),c);
+        unsigned unchanged=erases;
+        assert(settings_save(&c));assert(erases==unchanged);
+    }
+    ClockSettings valid=settings_load();
+    c.theme=THEME_COUNT;assert(!settings_save(&c));equal(settings_load(),valid);
     c.theme=99;assert(!settings_save(&c));
-    puts("PASS: settings defaults, unchanged-write suppression, dual-page recovery at every write boundary, CRC rejection");
+    puts("PASS: all-theme persistence, invalid theme rejection, unchanged-write suppression, dual-page recovery at every write boundary, CRC rejection");
 }

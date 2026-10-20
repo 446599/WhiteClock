@@ -1,0 +1,52 @@
+{
+  "started": "20261020_165503",
+  "mode": "flash",
+  "image_sha256": "4168abefc0c78b3616b113c409ae1da52b4ca56960b43bac1fb335b787d578a5",
+  "before": {
+    "part": "CW32L010F8U6",
+    "pin_count": 20,
+    "ram_bytes": 4096,
+    "flash_bytes": 65536,
+    "security_level": 0,
+    "rtc": [
+      "0x88",
+      "0x0",
+      "0x0",
+      "0x0",
+      "0x261004",
+      "0x122644",
+      "0x40",
+      "0x2000000",
+      "0x0",
+      "0x0",
+      "0xffff",
+      "0x0",
+      "0x0",
+      "0x7f",
+      "0xffff",
+      "0x3fff",
+      "0x101efa"
+    ],
+    "sysctrl": [
+      "0x0",
+      "0x11",
+      "0xc00",
+      "0x0",
+      "0x8811",
+      "0xd9fb",
+      "0x19775",
+      "0x27ff22",
+      "0x68",
+      "0x1c0a24",
+      "0x0",
+      "0x7e7",
+      "0x32",
+      "0x102",
+      "0x5"
+    ],
+    "gpiob_idr": "0x8c"
+  },
+  "before_sha256": "e305ac524a9625bb1e2ee6478c2e88df2bbb65e8d330206dfe9c72bc7ab9fd0f",
+  "flash_started": true,
+  "error": "[Errno 19] No such device (it may have been disconnected)"
+}

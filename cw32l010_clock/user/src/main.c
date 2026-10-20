@@ -6,6 +6,7 @@
 #include "temperature.h"
 volatile uint32_t clock_stage, epd_successes, epd_failures, rtc_failures;
 volatile uint32_t main_loop_max_ms, epd_poll_max_ms;
+volatile uint32_t clock_ui_state, clock_key_events, clock_last_key_ms;
 int main(void)
 {
     board_init(); clock_stage=1;
@@ -15,7 +16,7 @@ int main(void)
     ClockUI ui; clock_ui_init(&ui,&time,&settings); ui.error=!rtc_ok;
     temperature_init();ui.focus_tick=board_millis();
     ClockFace displayed={0}, pending={0};
-    bool have_display=false, dirty_settings=false, saving=false;
+    bool have_display=false, dirty_settings=false, saving=false, pending_fast=false, pending_alert=false;
     uint32_t poll=board_millis()-250u, changed=board_millis(), failed_at=0;
     uint32_t last_loop=board_millis();
     uint8_t fast_count=0, saving_page=0; bool retry=false;
@@ -28,6 +29,8 @@ int main(void)
         /* Input first; EPD, ADC and RTC operations all yield back here. */
         uint8_t key;
         while((key=board_key())!=KEY_NONE) {
+            ++clock_key_events; clock_last_key_ms=board_millis();
+            pending_alert=false;
             uint8_t action=clock_ui_key(&ui,key); changed=board_millis();
             if(action==ACTION_SET_CLOCK && !saving) {
                 saving=board_rtc_save_start(&ui.draft,ui.page==PAGE_DATE);
@@ -64,20 +67,33 @@ int main(void)
         if (elapsed>epd_poll_max_ms) epd_poll_max_ms=elapsed;
         if(result) {
             clock_stage=4;
-            if(result>0) { displayed=pending; have_display=true; ++epd_successes; retry=false; }
+            if(result>0) {
+                displayed=pending; have_display=true; ++epd_successes; retry=false;
+                if (epd_metrics.refreshed) fast_count=pending_fast ? fast_count+1u : 0u;
+                if (pending_alert && epd_metrics.refreshed && ui.focus_alert_remaining)
+                    --ui.focus_alert_remaining;
+            }
             else { have_display=false; ++epd_failures; failed_at=board_millis(); retry=true; }
+            pending_alert=false;
         }
         ClockFace face=clock_ui_face(&ui);
         now=board_millis();
         if (epd_active() && !clock_face_equal(&face,&pending) && epd_retarget(&face)) pending=face;
-        if(!epd_active() && (!retry || now-failed_at>=60000u) && now-changed>=20u &&
-           (!have_display || !clock_face_equal(&face,&displayed))) {
-            bool fast=have_display && fast_count<7u && face.inverted==displayed.inverted;
+        if(!epd_active() && (!retry || now-failed_at>=60000u) && now-changed>=5u &&
+           (ui.focus_alert_remaining || !have_display || !clock_face_equal(&face,&displayed))) {
+            /* Full waveforms must run even when the completed page is unchanged. */
+            bool alert=ui.focus_alert_remaining!=0;
+            bool fast=!alert && have_display && fast_count<7u && face.inverted==displayed.inverted;
             pending=face;
             if(epd_start(have_display ? &displayed : 0,&pending,fast)) {
-                fast_count=fast ? fast_count+1u : 0u; clock_stage=3;
+                pending_fast=fast; pending_alert=alert; clock_stage=3;
             }
         }
+        /* Read-only diagnostics: UI, pending and displayed page/cursor pairs. */
+        clock_ui_state=ui.page | ((uint32_t)ui.cursor<<4) |
+            ((uint32_t)pending.page<<8) | ((uint32_t)pending.cursor<<12) |
+            ((uint32_t)displayed.page<<16) | ((uint32_t)displayed.cursor<<20) |
+            ((uint32_t)epd_active()<<24) | ((uint32_t)have_display<<25) | ((uint32_t)retry<<26);
         /* Do not insert a mandatory 1ms sleep between every SPI byte/row. */
         if (!epd_work_ready()) __WFI();
     }

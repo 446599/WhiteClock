@@ -1,6 +1,0 @@
-lib/src/cw32l010_systick.c:63:13:InitTick	8	static
-lib/src/cw32l010_systick.c:92:17:GetTick	0	static
-lib/src/cw32l010_systick.c:109:13:SysTickDelay	16	static
-lib/src/cw32l010_systick.c:132:13:SuspendTick	0	static
-lib/src/cw32l010_systick.c:150:13:ResumeTick	0	static
-lib/src/cw32l010_systick.c:160:6:SysTick_Handler	0	static

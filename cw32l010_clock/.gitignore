@@ -15,3 +15,16 @@
 
 # Generated from a pinned open pixel-font dependency
 /user/inc/ui_font.h
+
+# Reproducible previews and historical trial builds stay local.
+/design/
+/releases/*/
+!/releases/whiteclock-v1-fast-20261020/
+/releases/whiteclock-v1-fast-20261020/*
+!/releases/whiteclock-v1-fast-20261020/clock.bin
+!/releases/whiteclock-v1-fast-20261020/clock.hex
+!/releases/whiteclock-v1-fast-20261020/manifest.json
+!/releases/whiteclock-v1-fast-20261020/NOTES.md
+!/releases/whiteclock-v1-fast-20261020/LICENSE-DEJAVU.txt
+!/releases/whiteclock-v1-fast-20261020/LICENSE-UNIFONT.txt
+/docs/images/*.pgm

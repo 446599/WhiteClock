@@ -11,26 +11,39 @@ static void output(const char *path,ClockFace *f,int dither)
     }
     fclose(out);
 }
-int main(void)
+int main(int argc,char **argv)
 {
-    ClockTime t={26,10,4,14,36,0};ClockSettings s=clock_defaults();
-    ClockUI ui;clock_ui_init(&ui,&t,&s);ui.temperature_c=26;ui.temperature_valid=1;char path[100];
-    for(unsigned theme=0;theme<3;++theme){
+    const char *dir=argc>1 ? argv[1] : "design";
+    ClockTime t={26,10,20,14,36,0};ClockSettings s=clock_defaults();
+    ClockUI ui;clock_ui_init(&ui,&t,&s);ui.temperature_c=26;ui.temperature_valid=1;char path[1024];
+    for(unsigned theme=0;theme<THEME_COUNT;++theme){
         ui.settings.theme=theme;
         ClockFace f=clock_ui_face(&ui);
-        snprintf(path,sizeof path,"design/theme-%u.pgm",theme+1);output(path,&f,0);
-        snprintf(path,sizeof path,"design/theme-%u-dither.pgm",theme+1);output(path,&f,1);
-        f.inverted=1;snprintf(path,sizeof path,"design/theme-%u-night.pgm",theme+1);output(path,&f,0);
+        snprintf(path,sizeof path,"%s/theme-%u.pgm",dir,theme+1);output(path,&f,0);
+        snprintf(path,sizeof path,"%s/theme-%u-dither.pgm",dir,theme+1);output(path,&f,1);
+        f.inverted=1;snprintf(path,sizeof path,"%s/theme-%u-night.pgm",dir,theme+1);output(path,&f,0);
+        ui.page=PAGE_THEME;ui.cursor=theme;
+        f=clock_ui_face(&ui);
+        snprintf(path,sizeof path,"%s/theme-%u-select.pgm",dir,theme+1);output(path,&f,0);
+        ui.page=PAGE_HOME;
     }
     for(unsigned page=1;page<=PAGE_FOCUS;++page){
         ui.page=page;ui.cursor=page==PAGE_INVERT?2:0;ui.draft_settings=ui.settings;
         ClockFace f=clock_ui_face(&ui);
-        snprintf(path,sizeof path,"design/menu-%u.pgm",page);output(path,&f,0);
+        snprintf(path,sizeof path,"%s/menu-%u.pgm",dir,page);output(path,&f,0);
     }
+    ui.page=PAGE_MENU;ui.cursor=MENU_ITEM_COUNT-1u;
+    ClockFace last=clock_ui_face(&ui);
+    snprintf(path,sizeof path,"%s/menu-last.pgm",dir);output(path,&last,0);
+    last.inverted=!last.inverted;
+    snprintf(path,sizeof path,"%s/menu-last-night.pgm",dir);output(path,&last,0);
     ui.page=PAGE_FOCUS;ui.focus_state=FOCUS_PAUSED;
-    ClockFace paused=clock_ui_face(&ui);output("design/focus-paused.pgm",&paused,0);
+    ClockFace paused=clock_ui_face(&ui);
+    snprintf(path,sizeof path,"%s/focus-paused.pgm",dir);output(path,&paused,0);
     ui.focus_state=FOCUS_DONE;ui.focus_remaining_ms=0;
-    ClockFace done=clock_ui_face(&ui);output("design/focus-done.pgm",&done,0);
+    ClockFace done=clock_ui_face(&ui);
+    snprintf(path,sizeof path,"%s/focus-done.pgm",dir);output(path,&done,0);
     ui.page=PAGE_HOME;ui.settings.hour12=1;ui.settings.theme=0;
-    ClockFace f=clock_ui_face(&ui);output("design/12-hour.pgm",&f,0);
+    ClockFace f=clock_ui_face(&ui);
+    snprintf(path,sizeof path,"%s/12-hour.pgm",dir);output(path,&f,0);
 }

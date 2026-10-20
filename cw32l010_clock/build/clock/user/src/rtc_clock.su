@@ -1,7 +1,0 @@
-user/src/rtc_clock.c:18:13:source_ready	0	static
-user/src/rtc_clock.c:8:13:wait_cr1	16	static
-user/src/rtc_clock.c:26:6:board_rtc_read_time	24	static
-user/src/rtc_clock.c:36:6:board_rtc_read	32	static
-user/src/rtc_clock.c:43:6:board_rtc_init	40	static
-user/src/rtc_clock.c:82:6:board_rtc_save	32	static
-user/src/rtc_clock.c:100:6:board_rtc_set	24	static

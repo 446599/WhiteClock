@@ -68,9 +68,6 @@ extern "C"
 #define EPD_SPI_SCK_PIN              GPIO_PIN_5  /* PA5, AF3 */
 #define EPD_SPI_MOSI_PIN             GPIO_PIN_6  /* PA6, AF3 */
 
-#define BUTTON_SET_PIN               GPIO_PIN_2  /* PB2, active low */
-#define BUTTON_UP_PIN                GPIO_PIN_3  /* PB3, active low */
-
 #define EPD_WIDTH                    152U
 #define EPD_HEIGHT                   296U
 #define EPD_ROW_BYTES                ((EPD_WIDTH + 7U) / 8U)

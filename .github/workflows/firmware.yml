@@ -1,47 +1,53 @@
-name: CW32 firmware
+name: WhiteClock Firmware
 on:
   push:
-    branches: [codex/desktop-clock-v4]
+    branches: [master, codex/whiteclock-v1]
+  pull_request:
+    branches: [master]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi binutils-arm-none-eabi python3-pil
-          python3 -m venv --system-site-packages /tmp/clock-tests
-          /tmp/clock-tests/bin/pip install pyocd==0.36.0
-          echo /tmp/clock-tests/bin >> "$GITHUB_PATH"
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi binutils-arm-none-eabi
+          python3 -m venv /tmp/whiteclock-tests
+          /tmp/whiteclock-tests/bin/pip install -r cw32l010_clock/requirements-dev.txt
+          echo /tmp/whiteclock-tests/bin >> "$GITHUB_PATH"
       - name: Build and verify firmware
         working-directory: cw32l010_clock
         run: |
-          make clean
           make fonts
+          make theme-assets
           make -j2
-          python3 tools/verify_image.py
+          python tools/verify_image.py
       - name: Host regression tests
         working-directory: cw32l010_clock
         run: |
-          make test
-          python3 -m unittest discover -s tests -p 'test_device.py'
-          python3 tools/preview_desktop.py
-          python3 -c "import json,os,pathlib; p=pathlib.Path('build/clock/manifest.json'); m=json.loads(p.read_text()); m.update(source_commit=os.environ['GITHUB_SHA'],host_tests='passed'); p.write_text(json.dumps(m,indent=2)+'\n')"
+          make -j2 test HOST_CC='cc -O2'
+          python -m unittest discover -s tests -p 'test_device.py'
+          python -m unittest discover -s tests -p 'test_theme_assets.py'
+          python tools/preview_desktop.py --output-dir build/preview
+          python -c "import json,os,pathlib; p=pathlib.Path('build/clock/manifest.json'); m=json.loads(p.read_text()); m.update(source_commit=os.environ['GITHUB_SHA'],host_tests='passed'); p.write_text(json.dumps(m,indent=2)+'\n')"
+      - name: Archive matching source without local build caches
+        run: |
+          git archive --format=tar.gz --output=source-snapshot.tar.gz HEAD
       - uses: actions/upload-artifact@v4
-        if: success()
         with:
-          name: desktop-clock-v4-${{ github.sha }}
+          name: WhiteClock-${{ github.sha }}
           path: |
+            source-snapshot.tar.gz
             cw32l010_clock/build/clock/clock.bin
             cw32l010_clock/build/clock/clock.hex
             cw32l010_clock/build/clock/clock.elf
             cw32l010_clock/build/clock/clock.map
             cw32l010_clock/build/clock/manifest.json
-            cw32l010_clock/design/desktop-v4.png
+            cw32l010_clock/build/preview/*.png
             cw32l010_clock/docs/
           retention-days: 30

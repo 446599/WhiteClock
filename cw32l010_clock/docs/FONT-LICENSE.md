@@ -7,4 +7,4 @@ Project and license: https://unifoundry.com/unifont.html
 SIL OFL 1.1: https://unifoundry.com/OFL-1.1.txt
 Alternative license and font exception: https://unifoundry.com/LICENSE.txt
 
-Builds fetch the exact bitmaps rather than rasterizing a host system font. Firmware artifacts include the upstream license texts. No standalone font is included as a download artifact. The 5x7 large-number patterns in the generator are original to this firmware revision and are enlarged only by integer pixels.
+The native UI subset uses exact upstream bitmaps. The seven selected themes also contain build-rasterized, one-bit DejaVu subsets, distributed under the DejaVu/Bitstream Vera terms included as `LICENSE-DEJAVU.txt` in the release directory. The theme generator obtains these fonts from Matplotlib's bundled font files; the device performs no font rasterization. Firmware artifacts include the upstream license texts. No standalone font is included as a download artifact. Original pixel-number patterns in the generator remain part of this firmware revision.

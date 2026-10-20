@@ -1,6 +1,0 @@
-user/src/settings.c:7:17:checksum	20	static
-user/src/settings.c:16:17:word	0	static
-user/src/settings.c:18:13:valid	24	static
-user/src/settings.c:26:17:latest	8	static
-user/src/settings.c:33:15:settings_load	32	static
-user/src/settings.c:39:6:settings_save	56	static

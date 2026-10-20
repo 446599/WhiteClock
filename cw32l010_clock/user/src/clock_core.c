@@ -63,7 +63,7 @@ bool clock_inverted(const ClockSettings *s, const ClockTime *t)
     if (start == end) return true; /* explicitly shown as 全天反色 */
     return start < end ? now >= start && now < end : now >= start || now < end;
 }
-uint8_t clock_button_sample(ClockButton *b, bool pressed, bool ok, uint32_t now)
+uint8_t clock_button_sample(ClockButton *b, bool pressed, bool is_set, uint32_t now)
 {
     if (b->raw != pressed) { b->raw = pressed; b->changed_at = now; }
     if (b->stable != b->raw && now - b->changed_at >= 20u) {
@@ -71,15 +71,16 @@ uint8_t clock_button_sample(ClockButton *b, bool pressed, bool ok, uint32_t now)
         if (b->stable) {
             b->pressed_at = b->repeated_at = now;
             b->long_sent = false;
-            if (ok) return KEY_OK;
-        } else if (!ok && !b->long_sent) return KEY_NEXT;
+            if (is_set) return KEY_OK;
+            return KEY_NEXT;
+        }
     }
     if (!b->stable || !b->raw) return KEY_NONE;
-    if (ok && now-b->pressed_at >= 500u && now-b->repeated_at >= 150u) {
+    if (is_set && now-b->pressed_at >= 500u && now-b->repeated_at >= 150u) {
         b->repeated_at = now;
         return KEY_REPEAT;
     }
-    if (!ok && !b->long_sent && now-b->pressed_at >= 700u) {
+    if (!is_set && !b->long_sent && now-b->pressed_at >= 700u) {
         b->long_sent = true;
         return KEY_BACK;
     }
@@ -89,6 +90,7 @@ void clock_ui_init(ClockUI *u, const ClockTime *t, const ClockSettings *s)
 {
     *u = (ClockUI){0};
     u->focus_preset = 2;
+    u->focus_return_page = PAGE_MENU;
     u->focus_remaining_ms = 25u*60000u;
     u->live = u->draft = *t;
     u->settings = u->draft_settings = *s;
@@ -101,22 +103,25 @@ static void clamp_day(ClockTime *t)
 }
 uint8_t clock_ui_key(ClockUI *u, uint8_t key)
 {
-    if (!key || (u->error==3 && key!=KEY_BACK)) return ACTION_NONE;
+    if (!key) return ACTION_NONE;
+    u->focus_alert_remaining=0;
+    if (u->error==3 && key!=KEY_BACK) return ACTION_NONE;
     if (key == KEY_BACK) {
+        if (u->page == PAGE_HOME) return ACTION_NONE;
         u->cursor=0; u->error=0;
-        if (u->page == PAGE_HOME) u->page=PAGE_MENU;
-        else u->page=u->page==PAGE_MENU ? PAGE_HOME : PAGE_MENU;
+        u->page=u->page==PAGE_FOCUS ? u->focus_return_page :
+            u->page==PAGE_MENU ? PAGE_HOME : PAGE_MENU;
         return ACTION_NONE;
     }
     if (u->page == PAGE_HOME) {
-        if (key==KEY_NEXT) { u->page=PAGE_MENU; u->cursor=0; }
-        if (key==KEY_OK) { u->settings.theme=(u->settings.theme+1u)%THEME_COUNT; return ACTION_SAVE_SETTINGS; }
+        if (key==KEY_OK) { u->page=PAGE_MENU; u->cursor=0; }
+        if (key==KEY_NEXT) { u->page=PAGE_FOCUS; u->cursor=0;u->focus_return_page=PAGE_HOME; }
     } else if (u->page == PAGE_MENU) {
-        if (key==KEY_NEXT) u->cursor=(u->cursor+1u)%7u;
-        if (key==KEY_OK) {
-            if (u->cursor==6) { u->page=PAGE_HOME; u->cursor=0; return ACTION_SAVE_SETTINGS; }
+        if (key==KEY_NEXT) u->cursor=(u->cursor+1u)%MENU_ITEM_COUNT;
+        if (key==KEY_OK && u->cursor<MENU_ITEM_COUNT) {
             static const uint8_t pages[]={PAGE_TIME,PAGE_DATE,PAGE_FORMAT,PAGE_INVERT,PAGE_THEME,PAGE_FOCUS};
             u->page=pages[u->cursor];
+            if (u->page==PAGE_FOCUS) u->focus_return_page=PAGE_MENU;
             u->draft=u->live; u->draft_settings=u->settings;
             u->cursor=u->page==PAGE_FORMAT ? u->settings.hour12 : u->page==PAGE_THEME ? u->settings.theme : 0;
             u->error=0;
@@ -204,7 +209,8 @@ void clock_ui_tick(ClockUI *u, uint32_t now)
     if (u->focus_state!=FOCUS_RUNNING) return;
     if (elapsed>=u->focus_remaining_ms) {
         u->focus_remaining_ms=0; u->focus_state=FOCUS_DONE;
-        if (u->page==PAGE_HOME) { u->page=PAGE_FOCUS; u->cursor=0; }
+        u->focus_alert_remaining=FOCUS_ALERT_FLASHES;
+        if (u->page==PAGE_HOME) { u->page=PAGE_FOCUS; u->cursor=0;u->focus_return_page=PAGE_HOME; }
     } else u->focus_remaining_ms-=elapsed;
 }
 bool clock_face_equal(const ClockFace *a, const ClockFace *b)
@@ -216,21 +222,14 @@ bool clock_face_equal(const ClockFace *a, const ClockFace *b)
 }
 bool clock_dither(uint8_t shade, unsigned x, unsigned y)
 {
-    /* 3x3 dispersed pattern gives exact 0, 1/3, 2/3, 1 coverage. */
-    return shade<3u && (shade==0u || ((x+2u*y)%3u) >= shade);
+    /* Ordered 4x4 Bayer cells give stable black/white output while retaining
+       three useful paper tones for the flip-card shadows and fold. */
+    static const uint8_t bayer[4][4] = {
+        {0,8,2,10}, {12,4,14,6}, {3,11,1,9}, {15,7,13,5}
+    };
+    if (shade==0u) return true;
+    if (shade>=3u) return false;
+    return bayer[y&3u][x&3u] < (shade==1u ? 12u : 8u);
 }
-void clock_render_row(const ClockFace *f, unsigned y, uint8_t row[PANEL_ROW_BYTES])
-{
-    uint8_t shades[152];
-    clock_render_column(f,y<PANEL_HEIGHT?295u-y:296u,shades);
-    for (unsigned i=0;i<PANEL_ROW_BYTES;++i) {
-        uint8_t byte=0xff;
-        for (unsigned bit=0;bit<8u;++bit) {
-            unsigned x=i*8u+bit;
-            /* Rotate 180 degrees from v1, matching the user's actual mounting. */
-            if (f && y<PANEL_HEIGHT && clock_dither(shades[x],295u-y,x))
-                byte&=(uint8_t)~(0x80u>>bit);
-        }
-        row[i]=byte;
-    }
-}
+void clock_render_row(const ClockFace *f,unsigned y,uint8_t row[PANEL_ROW_BYTES])
+{ clock_render_row_span(f,y,0,PANEL_ROW_BYTES,row); }

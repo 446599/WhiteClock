@@ -1,0 +1,3 @@
+Pillow==10.4.0
+matplotlib==3.9.2
+pyocd==0.44.1

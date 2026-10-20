@@ -16,6 +16,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "interrupts_cw32l010.h"
+#include "main.h"
+#include "board.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -179,9 +181,11 @@ void GPIOA_IRQHandler(void)
  */
 void GPIOB_IRQHandler(void)
 {
-    /* USER CODE BEGIN */
-
-    /* USER CODE END */
+    uint32_t pins = CW_GPIOB->ISR & (BUTTON_SET_PIN | BUTTON_BACK_PIN);
+    if (pins) {
+        GPIOB_INTFLAG_CLR(pins);
+        board_key_gpio_irq(pins);
+    }
 }
 
 

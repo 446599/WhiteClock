@@ -1,3 +1,9 @@
 .DS_Store
 __pycache__/
 *.pyc
+.venv/
+
+# Per-device snapshots and interrupted programming payloads stay local.
+/evidence/*.bin
+/evidence/*.json
+/evidence/*.txt

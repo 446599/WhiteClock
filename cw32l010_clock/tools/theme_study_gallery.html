@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WhiteClock · 20 个主题提案</title>
+<style>
+  :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; color: #17231d; background: #f5f6f5; }
+  * { box-sizing: border-box; letter-spacing: 0; }
+  body { margin: 0; }
+  header, main, footer { max-width: 1600px; margin: auto; padding: 24px; }
+  header { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; padding-bottom: 18px; }
+  h1 { font-size: 25px; margin: 0; font-weight: 650; }
+  header p { margin: 0; color: #536059; font-size: 13px; }
+  a { color: #195b3b; text-underline-offset: 3px; }
+  header a { margin-left: auto; font-size: 13px; }
+  .toolbar { position: sticky; top: 0; z-index: 2; background: #fff; border-block: 1px solid #d1d9d4; }
+  .controls { max-width: 1600px; margin: auto; padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+  label { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+  select, button { font: inherit; color: inherit; background: #fff; border: 1px solid #c1ccc5; border-radius: 4px; min-height: 34px; padding: 4px 10px; }
+  button { cursor: pointer; }
+  button:hover { background: #eaf0ec; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #237345; outline-offset: 3px; }
+  input { width: 17px; height: 17px; margin: 0; accent-color: #28633f; flex-shrink: 0; }
+  output { font-size: 13px; color: #28633f; overflow-wrap: anywhere; }
+  #selection { flex: 1; min-width: 90px; }
+  main { padding-top: 22px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 26px; }
+  .sample { min-width: 0; padding-bottom: 8px; scroll-margin-top: 80px; }
+  .sample[hidden] { display: none; }
+  .caption { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .caption label { font-weight: 600; font-size: 16px; }
+  .number { font-family: ui-monospace, monospace; color: #536059; font-size: 13px; }
+  .zoom { font-size: 12px; flex-shrink: 0; }
+  .sample img { display: block; width: 100%; height: auto; aspect-ratio: 296/152; image-rendering: pixelated; border: 1px solid #a8b4ac; background: #fff; cursor: zoom-in; }
+  .sample p { font-size: 12px; color: #536059; line-height: 1.7; margin: 8px 0 0; overflow-wrap: anywhere; }
+  #empty { text-align: center; padding: 60px 12px; color: #536059; }
+  footer { font-size: 12px; color: #536059; border-top: 1px solid #d1d9d4; }
+  dialog { padding: 20px; border: 1px solid #84988a; border-radius: 4px; max-width: min(960px, calc(100vw - 24px)); width: 960px; }
+  dialog::backdrop { background: #17231dcc; }
+  .dialog-title { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 18px; }
+  h2 { margin: 0; font-size: 20px; }
+  .close { width: 36px; height: 36px; padding: 0; font-size: 23px; }
+  dialog img { display: block; width: 100%; height: auto; image-rendering: pixelated; aspect-ratio: 296/152; border: 1px solid #a8b4ac; }
+  .dialog-bottom { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+  .dialog-bottom .spacer { flex: 1; }
+  @media (max-width: 700px) {
+    header, main, footer { padding: 18px 14px; }
+    header { gap: 10px; }
+    h1 { font-size: 22px; }
+    header a { margin-left: 0; }
+    header p { width: 100%; }
+    .controls { padding: 10px 14px; gap: 10px 14px; }
+    .controls label, output { font-size: 12px; }
+    .grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+    .caption label { font-size: 15px; }
+    dialog { padding: 12px; }
+    .dialog-bottom { gap: 8px; flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>WhiteClock · 主题候选</h1>
+  <p>20 个提案 / 296 × 152 / 黑白点阵</p>
+  <a href="overview.png" target="_blank" rel="noopener">20 款总览图 ↗</a>
+</header>
+<div class="toolbar"><div class="controls">
+  <label>风格 <select id="group"><option value="all">全部 20 款</option><option>朋克实验</option><option>简约排版</option><option>复古印刷</option><option>几何工业</option></select></label>
+  <label><input id="inverse" type="checkbox">反色</label>
+  <label><input id="selected-only" type="checkbox">只看已选</label>
+  <output id="selection" aria-live="polite">已选 0 款</output>
+  <button id="clear" type="button">清空选择</button>
+</div></div>
+<main>
+  <div class="grid"><!-- THEME_CARDS --></div>
+  <p id="empty" hidden>暂无已选主题</p>
+</main>
+<footer>设计提案，尚未接入固件。数字与纹理均为黑白像素；图中时间、日期和温度为统一样例。</footer>
+<dialog id="detail" aria-labelledby="detail-title">
+  <div class="dialog-title"><h2 id="detail-title"></h2><button class="close" aria-label="关闭" title="关闭" type="button">×</button></div>
+  <img id="detail-image" alt="" width="296" height="152">
+  <div class="dialog-bottom">
+    <button id="previous" type="button" title="上一个">←</button>
+    <button id="next" type="button" title="下一个">→</button>
+    <span class="spacer"></span>
+    <label><input id="detail-selected" type="checkbox">选中此主题</label>
+  </div>
+</dialog>
+<script>
+  const cards = [...document.querySelectorAll('.sample')];
+  const group = document.querySelector('#group');
+  const inverse = document.querySelector('#inverse');
+  const selectedOnly = document.querySelector('#selected-only');
+  const selection = document.querySelector('#selection');
+  const detail = document.querySelector('#detail');
+  const detailSelected = document.querySelector('#detail-selected');
+  let selected = new Set();
+  let active = 0;
+  try {
+    const saved = JSON.parse(localStorage.getItem('clock-theme-study-20261020') || '[]');
+    if (Array.isArray(saved)) selected = new Set(saved.filter(n => cards.some(c => c.dataset.number === n)));
+  } catch (_) {}
+  function source(n) { return `${n}${inverse.checked ? '-inverse' : ''}.png`; }
+  function update() {
+    for (const card of cards) {
+      const n = card.dataset.number;
+      card.querySelector('input').checked = selected.has(n);
+      card.querySelector('img').src = source(n);
+      card.hidden = (group.value !== 'all' && card.dataset.group !== group.value) || (selectedOnly.checked && !selected.has(n));
+    }
+    selection.textContent = selected.size ? `已选 ${[...selected].sort().join('、')}` : '已选 0 款';
+    document.querySelector('#empty').hidden = cards.some(c => !c.hidden);
+    try { localStorage.setItem('clock-theme-study-20261020', JSON.stringify([...selected])); } catch (_) {}
+    if (detail.open) show(active);
+  }
+  function choose(n, value) { value ? selected.add(n) : selected.delete(n); update(); }
+  function show(index) {
+    active = (index + cards.length) % cards.length;
+    const card = cards[active];
+    document.querySelector('#detail-title').textContent = card.querySelector('label').textContent.trim();
+    const img = document.querySelector('#detail-image');
+    img.src = source(card.dataset.number);
+    img.alt = card.querySelector('img').alt;
+    detailSelected.checked = selected.has(card.dataset.number);
+  }
+  for (const [i, card] of cards.entries()) {
+    card.querySelector('input').addEventListener('change', e => choose(card.dataset.number, e.target.checked));
+    for (const el of card.querySelectorAll('img, .zoom')) el.addEventListener('click', () => { show(i); detail.showModal(); });
+  }
+  for (const el of [group, inverse, selectedOnly]) el.addEventListener('change', update);
+  document.querySelector('#clear').addEventListener('click', () => { selected.clear(); update(); });
+  document.querySelector('.close').addEventListener('click', () => detail.close());
+  document.querySelector('#previous').addEventListener('click', () => show(active - 1));
+  document.querySelector('#next').addEventListener('click', () => show(active + 1));
+  detailSelected.addEventListener('change', e => choose(cards[active].dataset.number, e.target.checked));
+  detail.addEventListener('click', e => { if (e.target === detail) { const b = detail.getBoundingClientRect(); if (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) detail.close(); } });
+  update();
+</script>
+</body>
+</html>

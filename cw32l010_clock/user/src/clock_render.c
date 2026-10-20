@@ -1,5 +1,6 @@
 #include "clock_core.h"
 #include "ui_font.h"
+#include "clock_theme.h"
 
 enum { DRAW_RECT, DRAW_SMALL, DRAW_LARGE, DRAW_MEDIUM };
 typedef struct { uint16_t x,y,a,b; uint8_t kind,shade; } DrawOp;
@@ -7,10 +8,20 @@ static DrawOp ops[112];
 static unsigned op_count;
 static ClockFace cached;
 static bool cache_valid;
+static ClockWindow *damage;
+static unsigned previous_ops;
+static void include_op(const DrawOp *o);
 
 static void add(unsigned x,unsigned y,unsigned a,unsigned b,unsigned kind,unsigned shade)
 {
-    if (op_count < sizeof ops/sizeof ops[0]) ops[op_count++]=(DrawOp){x,y,a,b,kind,shade};
+    if (op_count >= sizeof ops/sizeof ops[0]) return;
+    DrawOp next={x,y,a,b,kind,shade}, *old=&ops[op_count];
+    if (damage && (op_count>=previous_ops || old->x!=x || old->y!=y ||
+        old->a!=a || old->b!=b || old->kind!=kind || old->shade!=shade)) {
+        if (op_count<previous_ops) include_op(old);
+        include_op(&next);
+    }
+    ops[op_count++]=next;
 }
 static void rect(unsigned x,unsigned y,unsigned w,unsigned h,unsigned shade) { add(x,y,w,h,DRAW_RECT,shade); }
 static uint16_t next_char(const char **p)
@@ -46,7 +57,7 @@ static void date_text(char s[32],const ClockTime *t)
     two(s+2,t->year);two(s+7,t->month);two(s+12,t->day);
 }
 static const char *weekdays[]={"星期日","星期一","星期二","星期三","星期四","星期五","星期六"};
-static const char *themes[]={"留白","翻页","日历"};
+static const char *themes[THEME_COUNT]={"错版","撕纸","头版","半调","几何","日牌","织纹"};
 static void time_digits(const ClockTime *t,bool hour12,unsigned x,unsigned y,unsigned step,bool large,unsigned shade)
 {
     unsigned h=clock_display_hour(t->hour,hour12);
@@ -60,46 +71,14 @@ static void outline(unsigned x,unsigned y,unsigned w,unsigned h)
 }
 static void temperature(const ClockFace *f,unsigned x,unsigned y)
 {
-    char value[]="芯温 --°C";
+    char value[]="温度 --°C";
     if (f->temperature_valid) {
         int t=f->temperature_c;
-        if (t<0) { text(x,y,"芯温",0); text(x+40,y,"-",0); t=-t;
+        if (t<0) { text(x,y,"温度",0); text(x+40,y,"-",0); t=-t;
             char n[]="00°C";two(n,(unsigned)t);text(x+48,y,n,0);return; }
         two(value+7,(unsigned)t);
     }
     text(x,y,value,0);
-}
-static void home(const ClockFace *f)
-{
-    const ClockTime *t=&f->time;
-    char date[32];date_text(date,t);
-    const char *period=f->settings.hour12 ? (t->hour<12 ? "上午" : "下午") : "24小时制";
-    text(14,10,date,0);text(234,10,weekdays[clock_weekday(t)],0);
-    rect(14,32,268,1,0);
-    if (f->settings.theme==0) {
-        time_digits(t,f->settings.hour12,47,41,41,true,0);
-    } else if (f->settings.theme==1) {
-        unsigned h=clock_display_hour(t->hour,f->settings.hour12);
-        const uint8_t d[]={h/10u,h%10u,t->minute/10u,t->minute%10u};
-        static const uint8_t xs[]={18,76,170,228};
-        for (unsigned i=0;i<4;++i) {
-            outline(xs[i],39,50,60);
-            add(xs[i]+6,43,d[i],0,DRAW_LARGE,0);
-        }
-        rect(145,57,5,5,0);rect(145,79,5,5,0);
-    } else {
-        rect(14,39,88,60,0);
-        add(20,43,t->day/10u,0,DRAW_LARGE,3);add(58,43,t->day%10u,0,DRAW_LARGE,3);
-        time_digits(t,f->settings.hour12,125,42,28,false,0);
-        text(127,81,"今日值得专注",0);
-    }
-    if (f->focus_state==FOCUS_RUNNING || f->focus_state==FOCUS_PAUSED) {
-        char left[]="专注 00分";two(left+7,f->focus_minutes);text(14,106,left,0);
-    } else text(14,106,period,0);
-    temperature(f,202,106);
-    /* Daily progress is black/white only, advanced once per displayed minute. */
-    rect(14,127,268,1,0);rect(14,126,(t->hour*60u+t->minute)*268u/1440u,3,0);
-    centered(133,"K1设置   K2主题",0);
 }
 static void focus_page(const ClockFace *f)
 {
@@ -111,16 +90,17 @@ static void focus_page(const ClockFace *f)
         f->focus_state==FOCUS_PAUSED ? "已暂停" : f->focus_state==FOCUS_DONE ? "已完成  休息一下" : "选择时长后开始";
     centered(103,status,0);
     outline(14,123,268,5);rect(15,124,266u*f->focus_progress/100u,3,0);
-    centered(133,f->focus_state==FOCUS_RUNNING ? "K1重置 K2暂停 长按K1返回" :
-        f->focus_state==FOCUS_PAUSED ? "K1重置 K2继续 长按K1返回" :
-        f->focus_state==FOCUS_DONE ? "K2确认完成 长按K1返回" : "K1时长 K2开始 长按K1返回",0);
+    centered(133,f->focus_state==FOCUS_RUNNING ? "SET暂停 BACK重置 长按BACK返回" :
+        f->focus_state==FOCUS_PAUSED ? "SET继续 BACK重置 长按BACK返回" :
+        f->focus_state==FOCUS_DONE ? "SET确认完成 BACK时长 长按BACK返回" : "SET开始 BACK时长 长按BACK返回",0);
 }
 static void footer(const char *s) { rect(12,122,272,1,0);centered(131,s,0); }
 static void title(const char *s) { text(14,9,s,0);rect(12,30,272,1,0); }
 static void choice(unsigned y,const char *s,bool selected)
 {
-    if (selected) rect(12,y-2,272,21,0);
-    text(22,y,s,selected?3:0);
+    text(30,y,s,0);
+    unsigned shade=selected ? 0u : 3u;
+    rect(16,y+4,4,8,shade);rect(15,y+5,6,6,shade);rect(14,y+6,8,4,shade);
 }
 static void editor(const ClockFace *f)
 {
@@ -137,7 +117,7 @@ static void editor(const ClockFace *f)
         if (f->cursor<3) rect(x[f->cursor],72,w[f->cursor],2,0);
         else choice(99,"保存日期",true);
     }
-    footer("K1下一项  K2加一  长按K1取消");
+    footer("SET修改  BACK下一项  长按BACK取消");
 }
 static void invert_page(const ClockFace *f)
 {
@@ -154,29 +134,33 @@ static void invert_page(const ClockFace *f)
     bool all=f->settings.start_hour==f->settings.end_hour && f->settings.start_minute==f->settings.end_minute;
     if (f->cursor==5) choice(99,"保存设置",true);
     else centered(99,all?"全天反色":"按24小时制设置",0);
-    footer("K1下一项  K2修改  长按K1取消");
+    footer("SET修改  BACK下一项  长按BACK取消");
 }
 static void prepare(const ClockFace *f)
 {
     if (cache_valid && clock_face_equal(&cached,f)) return;
     cached=*f;cache_valid=true;op_count=0;
     if (f->page==PAGE_HOME || f->page==PAGE_THEME) {
-        home(f);
+        clock_theme_prepare(f,add,text);
         if (f->page==PAGE_THEME) {
             rect(0,120,296,32,3);
-            text(12,130,themes[f->settings.theme],0);text(92,130,"K1切换 K2保存",0);
+            text(12,130,themes[f->settings.theme],0);text(92,130,"SET保存 BACK切换",0);
         }
     } else if (f->page==PAGE_MENU) {
         title("设置");
-        static const char *items[]={"时间设置","日期设置","时间制式","定时反色","显示主题","专注计时","保存返回"};
+        static const char *items[]={"时间设置","日期设置","时间制式","定时反色","显示主题","专注计时","WhiteClock V1.0"};
         unsigned first=f->cursor<4 ? 0 : 3;
-        for (unsigned i=first;i<first+4;++i) choice(39+(i-first)*21,items[i],i==f->cursor);
-        footer("K1下一项  K2确认  长按K1返回");
+        for (unsigned i=first;i<first+4;++i) {
+            unsigned y=39+(i-first)*21;
+            if (i<MENU_ITEM_COUNT) choice(y,items[i],i==f->cursor);
+            else text(30,y,items[i],0);
+        }
+        footer("SET确认  BACK下一项  长按BACK返回");
     } else if (f->page==PAGE_FOCUS) focus_page(f);
     else if (f->page==PAGE_FORMAT) {
         title("时间制式");
         choice(46,"24小时制",f->cursor==0);choice(79,"12小时制  上午/下午",f->cursor==1);
-        footer("K1切换  K2保存  长按K1取消");
+        footer("SET保存  BACK切换  长按BACK取消");
     } else if (f->page==PAGE_INVERT) invert_page(f);
     else editor(f);
     if (f->error) {
@@ -187,13 +171,47 @@ static void prepare(const ClockFace *f)
 static void dimensions(const DrawOp *o,unsigned *w,unsigned *h)
 {
     if (o->kind==DRAW_RECT) { *w=o->a;*h=o->b; }
+    else if (o->kind==DRAW_THEME_BACKGROUND) { *w=UI_WIDTH;*h=UI_HEIGHT; }
+    else if (o->kind==DRAW_THEME_GLYPH) clock_theme_dimensions(o->a,o->b,w,h);
     else if(o->kind==DRAW_SMALL) { *w=small_glyphs[o->a].width;*h=16; }
     else if(o->kind==DRAW_LARGE) { *w=38;*h=52; }
     else { *w=24;*h=32; }
 }
+static void include_op(const DrawOp *o)
+{
+    unsigned w,h; dimensions(o,&w,&h);
+    if (!w || !h || o->x>=UI_WIDTH || o->y>=UI_HEIGHT) return;
+    unsigned xe=o->x+w<UI_WIDTH ? o->x+w : UI_WIDTH;
+    unsigned ye=o->y+h<UI_HEIGHT ? o->y+h : UI_HEIGHT;
+    unsigned x0=o->y&~7u, x1=(ye-1u)|7u;
+    unsigned y0=UI_WIDTH-xe, y1=UI_WIDTH-1u-o->x;
+    if (x0<damage->x0) damage->x0=x0;
+    if (x1>damage->x1) damage->x1=x1;
+    if (y0<damage->y0) damage->y0=y0;
+    if (y1>damage->y1) damage->y1=y1;
+}
+bool clock_changed_window(const ClockFace *old,const ClockFace *next,ClockWindow *window)
+{
+    if (!next || !window) return false;
+    if (!old || old->inverted!=next->inverted) {
+        *window=(ClockWindow){0,PANEL_WIDTH-1u,0,PANEL_HEIGHT-1u};
+        return true;
+    }
+    prepare(old); previous_ops=op_count;
+    *window=(ClockWindow){PANEL_WIDTH,0,PANEL_HEIGHT,0};
+    /* Compare while replacing the cached scene, avoiding a second draw list
+       or two framebuffers on the 4 KiB MCU. Removed ops also damage their area. */
+    damage=window; cache_valid=false;
+    prepare(next);
+    for (unsigned i=op_count;i<previous_ops;++i) include_op(&ops[i]);
+    damage=0;
+    return window->x0<=window->x1 && window->y0<=window->y1;
+}
 static bool ink(const DrawOp *o,unsigned x,unsigned y)
 {
     if (o->kind==DRAW_RECT) return true;
+    if (o->kind==DRAW_THEME_GLYPH) return clock_theme_ink(o->a,o->b,x,y) &&
+        (!(o->b&1024u) || (((o->x+x)/2u+(o->y+y)/2u)%2u)==0u);
     if (o->kind==DRAW_SMALL) return (small_glyphs[o->a].rows[y] & (0x8000u>>x))!=0;
     const uint8_t *data=o->kind==DRAW_LARGE ? large_digits[o->a] : medium_digits[o->a];
     unsigned stride=o->kind==DRAW_LARGE?5u:3u;
@@ -205,20 +223,91 @@ uint8_t clock_shade(const ClockFace *f,unsigned x,unsigned y)
     prepare(f);uint8_t value=3;
     for (unsigned i=0;i<op_count;++i) {
         DrawOp *o=&ops[i];unsigned w,h;dimensions(o,&w,&h);
-        if (x>=o->x && x<o->x+w && y>=o->y && y<o->y+h && ink(o,x-o->x,y-o->y)) value=o->shade;
+        if (x>=o->x && x<o->x+w && y>=o->y && y<o->y+h) {
+            if (o->kind==DRAW_THEME_BACKGROUND) value=clock_theme_background(o->a,x,y);
+            else if (ink(o,x-o->x,y-o->y)) value=o->shade;
+        }
     }
     return f->inverted?3u-value:value;
 }
-void clock_render_column(const ClockFace *f,unsigned x,uint8_t shades[152])
+void clock_render_column_span(const ClockFace *f,unsigned x,unsigned first,
+                              unsigned end,uint8_t shades[152])
 {
-    for (unsigned y=0;y<152;++y) shades[y]=3;
+    for (unsigned y=first;y<end;++y) shades[y]=3;
     if (!f || x>=296) return;
     prepare(f);
     for (unsigned i=0;i<op_count;++i) {
         DrawOp *o=&ops[i];unsigned w,h;dimensions(o,&w,&h);
         if (x<o->x || x>=o->x+w) continue;
-        for (unsigned y=o->y;y<o->y+h && y<152;++y)
+        unsigned begin=o->y>first ? o->y : first;
+        unsigned limit=o->y+h<end ? o->y+h : end;
+        if (o->kind==DRAW_THEME_BACKGROUND) {
+            clock_theme_background_column(o->a,x,begin,limit,shades);continue;
+        }
+        if (o->kind==DRAW_THEME_GLYPH) {
+            uint64_t mask=clock_theme_mask(o->a,o->b,x-o->x);
+            for (unsigned y=begin;y<limit;++y)
+                if (((mask>>(y-o->y))&1u) && (!(o->b&1024u) || ((x/2u+y/2u)%2u)==0u)) shades[y]=o->shade;
+            continue;
+        }
+        for (unsigned y=begin;y<limit;++y)
             if (ink(o,x-o->x,y-o->y)) shades[y]=o->shade;
     }
-    if (f->inverted) for (unsigned y=0;y<152;++y) shades[y]=3u-shades[y];
+    if (f->inverted) for (unsigned y=first;y<end;++y) shades[y]=3u-shades[y];
+}
+void clock_render_column(const ClockFace *f,unsigned x,uint8_t shades[152])
+{ clock_render_column_span(f,x,0,UI_HEIGHT,shades); }
+
+void clock_render_row_span(const ClockFace *f,unsigned y,unsigned first_byte,
+                           unsigned byte_count,uint8_t *row)
+{
+    if (!row || first_byte>=PANEL_ROW_BYTES || byte_count>PANEL_ROW_BYTES-first_byte) return;
+    uint8_t background=f && y<PANEL_HEIGHT && f->inverted ? 0u : 0xffu;
+    for (unsigned i=0;i<byte_count;++i) row[i]=background;
+    if (!f || y>=PANEL_HEIGHT || !byte_count) return;
+    prepare(f);
+    unsigned x=UI_WIDTH-1u-y, first=first_byte*8u, end=(first_byte+byte_count)*8u;
+    uint8_t tones[4];
+    /* A four-pixel Bayer column repeats twice per byte, including in dark mode. */
+    for (unsigned shade=0;shade<4u;++shade) {
+        uint8_t tone=0;
+        for (unsigned bit=0;bit<4u;++bit)
+            if (!clock_dither(f->inverted ? 3u-shade : shade,x,bit)) tone|=0x80u>>bit;
+        tones[shade]=tone|(tone>>4);
+    }
+    for (unsigned i=0;i<op_count;++i) {
+        const DrawOp *o=&ops[i];unsigned w,h;dimensions(o,&w,&h);
+        if (x<o->x || x>=o->x+w) continue;
+        unsigned begin=o->y>first ? o->y : first;
+        unsigned limit=o->y+h<end ? o->y+h : end;
+        uint8_t tone=tones[o->shade];
+        if (o->kind==DRAW_THEME_BACKGROUND) {
+            clock_theme_background_row(o->a,x,first_byte,byte_count,row,f->inverted);
+        } else if (o->kind==DRAW_THEME_GLYPH) {
+            uint64_t column=clock_theme_mask(o->a,o->b,x-o->x);
+            for (unsigned p=begin;p<limit;++p) {
+                if (!((column>>(p-o->y))&1u) || ((o->b&1024u) && ((x/2u+p/2u)%2u)!=0u)) continue;
+                unsigned b=p/8u-first_byte;
+                uint8_t mask=0x80u>>(p%8u);
+                row[b]=(row[b]&~mask)|(tone&mask);
+            }
+        } else if (o->kind==DRAW_RECT) {
+            /* Opaque rectangles replace byte spans; later glyphs remain transparent. */
+            for (unsigned p=begin;p<limit;) {
+                unsigned stop=(p|7u)+1u;
+                if (stop>limit) stop=limit;
+                uint8_t mask=(0xffu>>(p&7u)) & (0xffu<<(7u-((stop-1u)&7u)));
+                unsigned b=p/8u-first_byte;
+                row[b]=(row[b]&~mask)|(tone&mask);
+                p=stop;
+            }
+        } else {
+            for (unsigned p=begin;p<limit;++p) {
+                if (!ink(o,x-o->x,p-o->y)) continue;
+                unsigned b=p/8u-first_byte;
+                uint8_t mask=0x80u>>(p&7u);
+                row[b]=(row[b]&~mask)|(tone&mask);
+            }
+        }
+    }
 }
