@@ -33,12 +33,25 @@ void SPI_SendData(FakeSPI *spi,uint8_t data)
 int main(void)
 {
     /* Physical SET is PB3 and must also work when held during startup. */
-    fake_gpio.IDR=~GPIO_PIN_3;board_init();uint8_t data[19]={0};
+    fake_gpio.IDR=~GPIO_PIN_3;fake_gpio.FILTER=0x2000cu;
+    board_init();uint8_t data[19]={0};
+    assert(fake_gpio.FILTER==0x20000u && !board_sleep_ready());
     advance(21);assert(board_key()==KEY_OK);assert(board_key()==KEY_NONE);
     advance(500);assert(board_key()==KEY_REPEAT);assert(board_key()==KEY_NONE);
     key_level(GPIO_PIN_3,false);advance(30);assert(board_key()==KEY_NONE);
+    assert(board_sleep_ready());
+    uint32_t idle_start=board_millis();
+    for (unsigned i=0;i<BOARD_RTC_HZ;++i) board_sleep_advance(1u);
+    assert(board_millis()-idle_start==1000u);
+    idle_start=board_millis();
+    for (unsigned i=0;i<71600u;++i) board_sleep_advance(BOARD_RTC_MINUTE_TICKS-1u);
+    assert(board_millis()-idle_start==
+        (uint32_t)(71600ull*(BOARD_RTC_MINUTE_TICKS-1u)*1000u/BOARD_RTC_HZ));
+    fake_gpio.ISR=GPIO_PIN_2;assert(!board_sleep_ready());fake_gpio.ISR=0;
+    fake_gpio.IDR &= ~GPIO_PIN_2;assert(!board_sleep_ready());fake_gpio.IDR |= GPIO_PIN_2;
     fake_spi.ISR=SPI_FLAG_TXE;
     assert(board_epd_begin(true,data,19));assert(!board_epd_begin(true,data,19));
+    assert(!board_sleep_ready());
     assert(board_epd_poll()==0 && sent==8 && !fake_cs);
     assert(board_epd_poll()==0 && sent==16);
     assert(board_epd_poll()==1 && sent==19 && fake_cs);
@@ -105,5 +118,10 @@ int main(void)
     fake_gpio.IDR &= ~GPIO_PIN_2;board_init();advance(30);
     assert(board_key()==KEY_NEXT);
     key_level(GPIO_PIN_2,false);advance(30);assert(board_key()==KEY_NONE);
+    fake_gpio.IDR &= ~(GPIO_PIN_2|GPIO_PIN_3);board_init();
+    assert(!board_sleep_ready());advance(30);
+    while (board_key()!=KEY_NONE) {}
+    key_level(GPIO_PIN_2|GPIO_PIN_3,false);advance(30);
+    assert(!board_sleep_ready()); /* Two-key boot keeps SWD recovery available. */
     puts("PASS: SPI budget/stalls/timeouts, SET=PB3 and BACK=PB2, held-at-boot, short/long/repeat, simultaneous and unrelated edges");
 }

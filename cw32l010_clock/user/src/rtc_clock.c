@@ -23,6 +23,36 @@ static bool source_ready(void)
     return false;
 }
 
+static void enable_wakeup(void)
+{
+    unlock();
+    CW_RTC->CR0=(CW_RTC->CR0 & ~7u) | RTC_INTERVAL_EVERY_1S;
+    CW_RTC->ICR=~RTC_IT_INTERVAL;
+    CW_RTC->IER=RTC_IT_INTERVAL;
+    lock();
+    NVIC_ClearPendingIRQ(RTC_IRQn);
+    NVIC_EnableIRQ(RTC_IRQn);
+}
+void board_rtc_wake_irq(void) { CW_RTC->ICR=~RTC_IT_INTERVAL; }
+bool board_rtc_sleep_ticks(uint32_t *ticks)
+{
+    if (!ticks || !CW_RTC->CR0_f.START || !CW_RTC->CR0_f.H24 ||
+        !source_ready() || (CW_RTC->CR1 & RTC_CR1_SOURCE_Msk)!=RTC_RTCCLK_FROM_LSE ||
+        CW_RTC->PSC!=16383u || !(CW_RTC->IER & RTC_IT_INTERVAL) ||
+        (CW_RTC->CR0 & 7u)!=RTC_INTERVAL_EVERY_1S) return false;
+    for (unsigned retry=0;retry<128u;++retry) {
+        uint32_t time=CW_RTC->TIME, ss=CW_RTC->SSCNT;
+        /* The reference manual requires identical SSCNT reads and SSCNT0!=0. */
+        if (ss!=CW_RTC->SSCNT || !(ss & 0xfffffu) || time!=CW_RTC->TIME) continue;
+        unsigned second=(time & 15u)+10u*((time>>4)&7u);
+        uint32_t sub=ss & 0xfffffu;
+        if ((time & 15u)>9u || second>=60u || sub>=16384u || ss>>21) return false;
+        *ticks=second*BOARD_RTC_HZ+sub+((ss & (1u<<20)) ? 16384u : 0u);
+        return true;
+    }
+    return false;
+}
+
 bool board_rtc_read_time(ClockTime *t)
 {
     if (!CW_RTC->CR0_f.START || !CW_RTC->CR0_f.H24 || !source_ready()) return false;
@@ -58,9 +88,7 @@ bool board_rtc_init(void)
 
     uint8_t h, m, s;
     if (running && source == RTC_RTCCLK_FROM_LSE && board_rtc_read(&h, &m, &s)) {
-        unlock();
-        CW_RTC->IER = 0; /* Polling, no inherited alarm interrupts. */
-        lock();
+        enable_wakeup();
         return true;
     }
 
@@ -76,6 +104,7 @@ bool board_rtc_init(void)
     CW_RTC->TIME = clock_encode(12, 0, 0);
     CW_RTC->CR0 = 0x88;
     lock();
+    enable_wakeup();
     return board_rtc_read(&h, &m, &s);
 }
 

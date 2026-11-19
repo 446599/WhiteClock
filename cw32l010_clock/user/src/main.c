@@ -4,6 +4,7 @@
 #include "epd.h"
 #include "settings.h"
 #include "temperature.h"
+#include "power.h"
 volatile uint32_t clock_stage, epd_successes, epd_failures, rtc_failures;
 volatile uint32_t main_loop_max_ms, epd_poll_max_ms;
 volatile uint32_t clock_ui_state, clock_key_events, clock_last_key_ms;
@@ -18,13 +19,10 @@ int main(void)
     ClockFace displayed={0}, pending={0};
     bool have_display=false, dirty_settings=false, saving=false, pending_fast=false, pending_alert=false;
     uint32_t poll=board_millis()-250u, changed=board_millis(), failed_at=0;
-    uint32_t last_loop=board_millis();
     uint8_t fast_count=0, saving_page=0; bool retry=false;
     clock_stage=2;
     while(1) {
-        uint32_t now=board_millis(), elapsed=now-last_loop;
-        last_loop=now;
-        if (elapsed>main_loop_max_ms) main_loop_max_ms=elapsed;
+        uint32_t loop_started=board_millis(), now=loop_started, elapsed;
         clock_ui_tick(&ui,now);
         /* Input first; EPD, ADC and RTC operations all yield back here. */
         uint8_t key;
@@ -94,8 +92,14 @@ int main(void)
             ((uint32_t)pending.page<<8) | ((uint32_t)pending.cursor<<12) |
             ((uint32_t)displayed.page<<16) | ((uint32_t)displayed.cursor<<20) |
             ((uint32_t)epd_active()<<24) | ((uint32_t)have_display<<25) | ((uint32_t)retry<<26);
+        /* Sleeping time is not active main-loop work or input blocking. */
+        elapsed=board_millis()-loop_started;
+        if (elapsed>main_loop_max_ms) main_loop_max_ms=elapsed;
         /* Do not insert a mandatory 1ms sleep between every SPI byte/row. */
-        if (!epd_work_ready()) __WFI();
+        if (!epd_work_ready()) {
+            power_idle(!epd_active() && !saving && !dirty_settings && !temperature_active() &&
+                !ui.focus_alert_remaining && (retry || (have_display && clock_face_equal(&face,&displayed))));
+        }
     }
 }
 void assert_failed(uint8_t *file,uint32_t line)

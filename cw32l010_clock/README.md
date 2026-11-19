@@ -6,13 +6,13 @@
 
 目标为 CW32L010F8U6，64 KiB Flash、4 KiB RAM；横向界面 296 × 152。工程目录保留芯片型号命名，EIDE 工作区为 `WhiteClock.code-workspace`。
 
-| V1.0 发布镜像 | 配置 |
+| V1.1 发布镜像 | 配置 |
 |---|---|
-| 目录 | `releases/whiteclock-v1-fast-20261020/` |
-| BIN 大小 | 61,252 字节 |
-| BIN SHA-256 | `4168abefc0c78b3616b113c409ae1da52b4ca56960b43bac1fb335b787d578a5` |
-| 应用上限 / 剩余 | 64,000 / 2,748 字节 |
-| 静态 RAM / 栈顶余量 | 2,572 / 1,524 字节 |
+| 目录 | `releases/whiteclock-v1.1.0/` |
+| BIN 大小 | 62,080 字节 |
+| BIN SHA-256 | `7ef17dbca32100496f88273069aa867a3c9125f0f55e0827342db403157ef959` |
+| 应用上限 / 剩余 | 64,000 / 1,920 字节 |
+| 静态 RAM / 栈顶余量 | 2,600 / 1,496 字节 |
 | 设置页 / 安全页 | `0xFA00`、`0xFC00` / `0xFE00` |
 
 以上为随版本提供的镜像数据。工具链变化可能改变重新编译的镜像大小和哈希；烧录时应使用目标产物自身的清单。
@@ -70,13 +70,14 @@ make test HOST_CC='cc -O2'
 读取运行指标时指定匹配镜像目录：
 
 ```sh
-python tools/monitor_refresh.py --build releases/whiteclock-v1-fast-20261020 --seconds 60
+python tools/monitor_refresh.py --build releases/whiteclock-v1.1.0 --seconds 60
 ```
 
 工具先核对设备应用与本地镜像，再读取调试地址。`epd_metrics` 包含准备、OLD、NEW、BUSY、收尾、总耗时及渲染工作量；启动计时、主机渲染耗时均不能当作按键到画面的响应延迟。
 
 ## 技术资料
 
+- [低功耗移植与验证边界](docs/LOW-POWER.md)
 - [架构与硬件](docs/DESKTOP-V4.md)
 - [屏幕驱动分析](docs/EPD-DRIVER-RESEARCH.md)
 - [原厂协议分析](../cw32l010_epd_analysis.md)

@@ -1,18 +1,21 @@
 {
   "project": "WhiteClock",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "release": {
-    "tag": "v1.0.0",
-    "file": "whiteclock-v1-fast-20261020/clock.bin",
-    "manifest": "whiteclock-v1-fast-20261020/manifest.json",
-    "sha256": "4168abefc0c78b3616b113c409ae1da52b4ca56960b43bac1fb335b787d578a5",
-    "bytes": 61252,
-    "static_ram_bytes": 2572,
-    "stack_space_bytes": 1524,
-    "application_free_bytes": 2748,
+    "tag": "v1.1.0",
+    "file": "whiteclock-v1.1.0/clock.bin",
+    "manifest": "whiteclock-v1.1.0/manifest.json",
+    "sha256": "7ef17dbca32100496f88273069aa867a3c9125f0f55e0827342db403157ef959",
+    "bytes": 62080,
+    "static_ram_bytes": 2600,
+    "stack_space_bytes": 1496,
+    "application_free_bytes": 1920,
     "flash_origin": 0,
     "application_limit": 64000,
-    "settings_pages": ["0xFA00", "0xFC00"],
+    "settings_pages": [
+      "0xFA00",
+      "0xFC00"
+    ],
     "safety_page": "0xFE00"
   },
   "hardware": {
@@ -24,14 +27,30 @@
     "panel_height": 296
   },
   "reference_validation": {
-    "scope": "Reference-device readback only; not a substitute for verification on another device.",
-    "evidence": "evidence/recovery_20261020_170205.json",
+    "scope": "Low-power reference application validated; release changes only the menu version label. Each device requires independent backup and verification.",
+    "tested_application_sha256": "64e6870110e9e19e21f24577028f95f15d169ce2c65fe3a4888ff3b154992928",
     "readback_verified": true,
-    "full_flash_sha256": "2c71c13673301bdc95b55560055d5e0757a1d5aba0a17c9fd7c2b138ce08120d"
+    "full_flash_sha256": "d82b36994f6669aada0e423a5b01eedb1b8a9d06bd4e8dc4c304355543a5951b",
+    "evidence": "evidence/device_20261119_205153.json",
+    "runtime_evidence": "evidence/refresh_20261119_205336.json",
+    "current_and_endurance_measured": false
   },
   "historical_images": [
-    {"file": "clock-v3-ui-installed.bin", "bytes": 18124, "sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51"},
-    {"file": "clock-v1-installed.bin", "bytes": 4972, "sha256": "abd4ed6e6603ee154565437c7dc70452b4fdec6ae35f3ea315645ffb120565ed"}
+    {
+      "file": "whiteclock-v1-fast-20261020/clock.bin",
+      "bytes": 61252,
+      "sha256": "4168abefc0c78b3616b113c409ae1da52b4ca56960b43bac1fb335b787d578a5"
+    },
+    {
+      "file": "clock-v3-ui-installed.bin",
+      "bytes": 18124,
+      "sha256": "7f1c61d5ea89e7b80482d3379517928c11d0b75ea9b63ac3e21102feee3deb51"
+    },
+    {
+      "file": "clock-v1-installed.bin",
+      "bytes": 4972,
+      "sha256": "abd4ed6e6603ee154565437c7dc70452b4fdec6ae35f3ea315645ffb120565ed"
+    }
   ],
   "limitations": [
     "Hardware variants and temperature range are not comprehensively qualified.",

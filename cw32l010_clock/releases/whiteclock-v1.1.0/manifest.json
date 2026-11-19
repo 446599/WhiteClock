@@ -1,0 +1,56 @@
+{
+  "image": "clock.bin",
+  "sha256": "7ef17dbca32100496f88273069aa867a3c9125f0f55e0827342db403157ef959",
+  "bytes": 62080,
+  "flash_origin": 0,
+  "static_ram_bytes": 2600,
+  "minimum_stack_bytes": 1024,
+  "original_sha256": "0f92f36672594320223d3a23815bd04f864b1163875ef61d41a2460bd0c80c71",
+  "hardware_status": "Low-power implementation verified on reference hardware. Release differs from tested application only in one menu-version byte; release binary was not separately flashed.",
+  "debug_symbols": {
+    "clock_stage": 536873448,
+    "epd_successes": 536873444,
+    "epd_failures": 536873440,
+    "rtc_failures": 536873436,
+    "key_overflows": 536870940,
+    "main_loop_max_ms": 536873432,
+    "epd_poll_max_ms": 536873428,
+    "clock_ui_state": 536873424,
+    "clock_key_events": 536873420,
+    "clock_last_key_ms": 536873416,
+    "power_deep_entries": 536873464,
+    "power_sleep_ms": 536873460,
+    "power_clock_failures": 536873456,
+    "epd_setup_ms": 536873264,
+    "epd_old_ms": 536873268,
+    "epd_new_ms": 536873272,
+    "epd_busy_ms": 536873276,
+    "epd_finish_ms": 536873280,
+    "epd_total_ms": 536873284,
+    "epd_image_bytes": 536873288,
+    "epd_rendered_rows": 536873292,
+    "epd_max_render_ms": 536873296,
+    "epd_refreshed": 536873300
+  },
+  "project": "WhiteClock",
+  "version": "1.1.0",
+  "display_version": "WhiteClock V1.1",
+  "reference_validation": {
+    "tested_application_sha256": "64e6870110e9e19e21f24577028f95f15d169ce2c65fe3a4888ff3b154992928",
+    "verified_full_flash_sha256": "d82b36994f6669aada0e423a5b01eedb1b8a9d06bd4e8dc4c304355543a5951b",
+    "flash_evidence": "../../../evidence/device_20261119_205153.json",
+    "runtime_evidence": "../../../evidence/refresh_20261119_205336.json",
+    "version_only_change": {
+      "offset": 17383,
+      "before": 48,
+      "after": 49
+    },
+    "runtime_errors": {
+      "epd_failures": 0,
+      "rtc_failures": 0,
+      "key_overflows": 0,
+      "power_clock_failures": 0
+    },
+    "current_and_endurance_measured": false
+  }
+}

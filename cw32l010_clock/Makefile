@@ -28,6 +28,7 @@ $(OBJECTS): | user/inc/ui_font.h
 
 RENDER_TESTS = $(addprefix $(BUILD)/,test_clock test_rtc test_settings test_desktop test_spi test_labels test_epd test_epd_window test_epd_quality test_epd_quality47 test_epd_fast47 test_window test_main test_focus_alert test_theme_render)
 $(RENDER_TESTS): user/src/clock_theme.c user/inc/clock_theme.h user/inc/theme_assets.h
+$(BUILD)/test_main $(BUILD)/test_focus_alert $(BUILD)/test_menu_transition: user/inc/power.h
 
 
 all: $(BUILD)/clock.bin $(BUILD)/clock.hex
@@ -52,6 +53,18 @@ clean:
 .PHONY: test
 test: $(BUILD)/test_clock
 	./$(BUILD)/test_clock
+
+.PHONY: test-power
+test: test-power
+test-power: $(BUILD)/test_power $(BUILD)/test_power_main
+	./$(BUILD)/test_power
+	./$(BUILD)/test_power_main
+$(BUILD)/test_power: tests/test_power.c tests/fake_power/main.h user/src/power.c user/inc/power.h user/inc/board.h
+	@mkdir -p $(BUILD)
+	$(HOST_CC) -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=all -Itests/fake_power -Iuser/inc tests/test_power.c user/src/power.c -o $@
+$(BUILD)/test_power_main: tests/test_power_main.c tests/fake_power/main.h user/src/main.c user/src/power.c user/src/clock_core.c user/src/clock_render.c user/src/clock_theme.c user/inc/board.h user/inc/power.h user/inc/epd.h user/inc/temperature.h user/inc/ui_font.h user/inc/theme_assets.h
+	@mkdir -p $(BUILD)
+	$(HOST_CC) -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=all -Itests/fake_power -Iuser/inc tests/test_power_main.c user/src/power.c user/src/clock_core.c user/src/clock_render.c user/src/clock_theme.c -o $@
 $(BUILD)/test_clock: tests/test_clock.c user/src/clock_core.c user/src/clock_render.c user/src/epd.c user/inc/epd_lut.h
 	@mkdir -p $(BUILD)
 	$(HOST_CC) -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=all -Iuser/inc tests/test_clock.c user/src/clock_core.c user/src/clock_render.c user/src/clock_theme.c user/src/epd.c -o $@
@@ -59,7 +72,7 @@ test: test-rtc
 .PHONY: test-rtc
 test-rtc: $(BUILD)/test_rtc
 	./$(BUILD)/test_rtc
-$(BUILD)/test_rtc: tests/test_rtc.c tests/fake/main.h user/src/rtc_clock.c user/src/clock_core.c user/src/clock_render.c
+$(BUILD)/test_rtc: tests/test_rtc.c tests/fake/main.h user/src/rtc_clock.c user/src/clock_core.c user/src/clock_render.c user/inc/board.h
 	$(HOST_CC) -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined -fno-sanitize-recover=all -Itests/fake -Iuser/inc tests/test_rtc.c user/src/rtc_clock.c user/src/clock_core.c user/src/clock_render.c user/src/clock_theme.c -o $@
 
 test: test-settings

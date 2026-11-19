@@ -97,7 +97,7 @@ static void check_choice(ClockFace *face,const char *label,unsigned y,bool selec
 }
 static void check_menu_selection(ClockFace *face)
 {
-    static const char *items[]={"时间设置","日期设置","时间制式","定时反色","显示主题","专注计时","WhiteClock V1.0"};
+    static const char *items[]={"时间设置","日期设置","时间制式","定时反色","显示主题","专注计时","WhiteClock V1.1"};
     face->page=PAGE_MENU;
     for (unsigned cursor=0;cursor<MENU_ITEM_COUNT;++cursor) {
         face->cursor=cursor;

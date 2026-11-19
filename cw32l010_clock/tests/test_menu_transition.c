@@ -19,6 +19,8 @@ static bool sent, active, data, advance;
 static uint8_t command, payload[56], old_wire[5624], new_wire[5624], physical[5624], menu[5624];
 static unsigned length;
 static ClockTime rtc;
+void power_idle(bool allow_deep) { (void)allow_deep;test_wait(); }
+bool temperature_active(void) { return false; }
 
 void board_init(void)
 {

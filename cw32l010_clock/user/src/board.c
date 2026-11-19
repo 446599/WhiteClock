@@ -7,6 +7,10 @@ static volatile uint32_t millis;
 static ClockButton buttons[2];
 static volatile uint8_t keys[64], key_head, key_tail;
 static volatile uint8_t button_watch_mask;
+static bool deep_disabled;
+static bool boot_check;
+static uint32_t boot_since;
+static uint32_t sleep_fraction;
 volatile uint32_t key_overflows;
 
 void SysTick_Handler(void)
@@ -28,6 +32,11 @@ void SysTick_Handler(void)
         if (!buttons[i].raw && !buttons[i].stable) {
             button_watch_mask &= (uint8_t)~bit;
         }
+    }
+    /* Latch the rescue chord after debounce, not while pull-ups are settling. */
+    if (boot_check && millis-boot_since>=30u) {
+        deep_disabled=buttons[0].stable && buttons[0].raw && buttons[1].stable && buttons[1].raw;
+        boot_check=false;
     }
 }
 
@@ -61,6 +70,20 @@ static struct {
     uint32_t started, last_progress;
     bool active;
 } spi_tx;
+bool board_sleep_ready(void)
+{
+    uint32_t pins=BUTTON_SET_PIN | BUTTON_BACK_PIN;
+    return !boot_check && !deep_disabled && !spi_tx.active && !button_watch_mask && key_head==key_tail &&
+        (CW_GPIOB->IDR & pins)==pins && !(CW_GPIOB->ISR & pins);
+}
+uint32_t board_sleep_advance(uint32_t rtc_ticks)
+{
+    uint32_t scaled=rtc_ticks*1000u+sleep_fraction;
+    uint32_t elapsed=scaled/BOARD_RTC_HZ;
+    sleep_fraction=scaled%BOARD_RTC_HZ;
+    millis+=elapsed;
+    return elapsed;
+}
 bool board_epd_begin(bool data,const uint8_t *bytes,unsigned length)
 {
     if (spi_tx.active || !bytes || !length) return false;
@@ -115,11 +138,14 @@ void board_init(void)
     gpio.Mode = GPIO_MODE_INPUT_PULLUP;
     gpio.IT = GPIO_IT_RISING | GPIO_IT_FALLING;
     GPIO_Init(CW_GPIOB, &gpio);
-    GPIO_ConfigFilter(CW_GPIOB, BUTTON_SET_PIN | BUTTON_BACK_PIN, GPIO_FLTCLK_HCLK8);
+    /* HCLK stops in DeepSleep; edge wake must not depend on its filter clock.
+       Keep the existing 20 ms software debounce after the edge wakes the CPU. */
+    CW_GPIOB->FILTER &= ~(BUTTON_SET_PIN | BUTTON_BACK_PIN);
     GPIOB_INTFLAG_CLR(BUTTON_SET_PIN | BUTTON_BACK_PIN);
     NVIC_ClearPendingIRQ(GPIOB_IRQn);
     NVIC_SetPriority(GPIOB_IRQn, 0u);
     NVIC_EnableIRQ(GPIOB_IRQn);
+    deep_disabled=false;boot_check=true;boot_since=millis;
     /* Capture a key already held during reset; normal transitions arrive via
        GPIOB_IRQHandler and set the same watch bits. */
     if (!(CW_GPIOB->IDR & BUTTON_SET_PIN)) button_watch_mask |= 1u << 0;

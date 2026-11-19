@@ -8,6 +8,13 @@
 #define BUTTON_BACK_PIN (1u << 2) /* PB2 */
 void board_init(void);
 uint32_t board_millis(void);
+#define BOARD_RTC_HZ 32768u
+#define BOARD_RTC_MINUTE_TICKS (60u * BOARD_RTC_HZ)
+bool board_sleep_ready(void);
+/* Called with IRQs masked; rtc_ticks is a delta shorter than one RTC minute. */
+uint32_t board_sleep_advance(uint32_t rtc_ticks);
+bool board_rtc_sleep_ticks(uint32_t *ticks);
+void board_rtc_wake_irq(void);
 void board_delay(uint32_t ms);
 uint8_t board_key(void);
 /* Called by GPIOB_IRQHandler with the active-low button edge mask. */

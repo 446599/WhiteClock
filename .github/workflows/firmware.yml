@@ -1,7 +1,7 @@
 name: WhiteClock Firmware
 on:
   push:
-    branches: [master, codex/whiteclock-v1]
+    branches: [master, codex/whiteclock-v1, codex/whiteclock-low-power]
   pull_request:
     branches: [master]
   workflow_dispatch:

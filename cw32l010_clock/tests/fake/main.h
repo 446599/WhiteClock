@@ -5,7 +5,7 @@ typedef struct {
     uint32_t KEY;
     union { uint32_t CR0; struct { uint32_t interval:3, H24:1, reserved:3, START:1; } CR0_f; };
     union { uint32_t CR1; struct { uint32_t ACCESS:1, WINDOW:1, WAIT:1, reserved:5, SOURCE:3; } CR1_f; };
-    uint32_t CR2, COMPCFR1, DATE, TIME, IER, PSC;
+    uint32_t CR2, COMPCFR1, DATE, TIME, IER, PSC, ICR, SSCNT;
 } FakeRTC;
 typedef struct { uint32_t CR1, LSE; struct { uint32_t STABLE; } LSE_f, LSI_f; } FakeSYSCTRL;
 typedef struct { uint32_t ANALOG; } FakeGPIO;
@@ -25,5 +25,11 @@ extern FakeGPIO test_gpio;
 #define GPIO_PIN_0 1u
 #define GPIO_PIN_1 2u
 #define __SYSCTRL_RTC_CLK_ENABLE() ((void)0)
+#define RTC_INTERVAL_EVERY_1S 2u
+#define RTC_IT_INTERVAL (1u<<6)
+#define RTC_IRQn 2
+extern uint32_t test_nvic_enabled,test_nvic_pending;
+#define NVIC_ClearPendingIRQ(x) (test_nvic_pending &= ~(1u<<(x)))
+#define NVIC_EnableIRQ(x) (test_nvic_enabled |= 1u<<(x))
 int SYSCTRL_LSI_Enable(void);
 #endif

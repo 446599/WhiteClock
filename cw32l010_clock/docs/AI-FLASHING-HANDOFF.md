@@ -36,10 +36,10 @@
 
 在 `cw32l010_clock/` 下建立 Python 环境并安装 `requirements-dev.txt`。芯片支持包在 `pack/WHXY.CW32L010_DFP.1.0.2.pack`，目标名称 `cw32l010f8`。
 
-V1.0 发布目录为 `releases/whiteclock-v1-fast-20261020/`。目标 BIN 为 61,252 字节，SHA-256：
+V1.1 发布目录为 `releases/whiteclock-v1.1.0/`。目标 BIN 为 62,080 字节，SHA-256：
 
 ```text
-4168abefc0c78b3616b113c409ae1da52b4ca56960b43bac1fb335b787d578a5
+7ef17dbca32100496f88273069aa867a3c9125f0f55e0827342db403157ef959
 ```
 
 读取同目录 `manifest.json` 验证 BIN，必要时核对 HEX 与 BIN 一致。不用本地旧 `build/` 文件替代正式版本；烧录现成 BIN 不需要重编译。
@@ -56,7 +56,7 @@ V1.0 发布目录为 `releases/whiteclock-v1-fast-20261020/`。目标 BIN 为 61
 `tools/device.py` 默认只读。指定正式目录可使用下面入口，并按我的操作系统调整引号与环境激活方式：
 
 ```sh
-python -c 'from pathlib import Path; import sys; sys.path.insert(0,"tools"); import device; device.BUILD=Path("releases/whiteclock-v1-fast-20261020").resolve(); device.main()' --probe <实际ID> --frequency 5000
+python -c 'from pathlib import Path; import sys; sys.path.insert(0,"tools"); import device; device.BUILD=Path("releases/whiteclock-v1.1.0").resolve(); device.main()' --probe <实际ID> --frequency 5000
 ```
 
 确认后的写入使用同一入口，追加 `--flash --expected-before-sha256 <本次只读的完整64KiB哈希>`。该哈希不是发布 BIN 哈希，也不是其他设备或历史报告的整片哈希。
@@ -66,6 +66,7 @@ python -c 'from pathlib import Path; import sys; sys.path.insert(0,"tools"); imp
 - 不整片擦除、不解除读保护、不写安全页、不覆盖设置页。
 - `cw32l010_original_64k.bin` 是参考设备备份，仅用于当前工具的参考哈希检查与协议分析；不能当作我的原厂备份，也不能使用 `--restore` 将它覆盖到我的设备。
 - 连接不稳时先修复供电和接触，可将 SWD 降到 1 kHz；不能循环擦写碰运气。
+- V1.1 空闲时会深睡。需调试连接时可同时按住 SET / BACK 上电约 1 秒再松开，本次禁用深睡；正常重启恢复。不能在禁用深睡或连接调试器时估算电池续航。
 - 写入一旦开始但未校验通过，设备完整性未知。保存本次 `before_*.bin`、`program_pages_*.bin` 和报告，不反复复位、不宣称烧录完成。恢复连接后先整片比较，再决定是否补写应用页；不能用任意历史哈希放行。
 - 不因屏幕相似就启用裁剪窗口、替换 LUT 或提高驱动电压。正式配置为快刷 LUT 开启、裁剪窗口关闭、全刷 / 快刷边框均 `0x47`。
 - 如果没有本机操作能力，请给出逐步指导并等待实际输出，不虚构检测、备份、写入或校验结果。

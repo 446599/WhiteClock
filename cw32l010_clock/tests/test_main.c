@@ -27,6 +27,8 @@ static ClockTime rtc={26,10,4,12,34,0};
 volatile EpdMetrics epd_metrics;
 
 void board_init(void) {}
+void power_idle(bool allow_deep) { (void)allow_deep;test_wait(); }
+bool temperature_active(void) { return false; }
 uint32_t board_millis(void) { return tick; }
 uint8_t board_key(void) { uint8_t result=key; key=KEY_NONE; return result; }
 bool board_rtc_init(void) { return true; }

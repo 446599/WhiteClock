@@ -67,10 +67,10 @@ python -m pyocd list
 
 ## 5. 只读检查与备份
 
-下面命令以 V1.0 目录为例，替换 `<烧录器ID>`。不要添加 `--flash` 或 `--restore`：
+下面命令以 V1.1 目录为例，替换 `<烧录器ID>`。不要添加 `--flash` 或 `--restore`：
 
 ```sh
-python -c 'from pathlib import Path; import sys; sys.path.insert(0,"tools"); import device; device.BUILD=Path("releases/whiteclock-v1-fast-20261020").resolve(); device.main()' \
+python -c 'from pathlib import Path; import sys; sys.path.insert(0,"tools"); import device; device.BUILD=Path("releases/whiteclock-v1.1.0").resolve(); device.main()' \
   --probe <烧录器ID> --frequency 5000
 ```
 
@@ -101,6 +101,8 @@ python -c 'from pathlib import Path; import sys; sys.path.insert(0,"tools"); imp
 断电后应能保留显示设置。时间保持取决于设备供电及 RTC 状态；请单独核对日期和走时。芯片温度不能当作校准室温。
 
 ## 连接失败或写入中断
+
+V1.1 在空闲时深度休眠。需要稳定调试连接时，可同时按住 SET 和 BACK 上电，保持约 1 秒后松开，本次运行禁用深睡；正常重新上电恢复。电流和续航测试必须正常启动并断开烧录器，不能在此调试模式下测量。
 
 | 情况 | 处理 |
 |---|---|

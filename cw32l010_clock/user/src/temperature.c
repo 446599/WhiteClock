@@ -53,6 +53,7 @@ void temperature_poll(uint32_t now)
         } else if (now-since>=20u) stop(true,now);
     }
 }
+bool temperature_active(void) { return state!=0; }
 bool temperature_read(int16_t *c10)
 {
     if (!valid || !c10) return false;

@@ -21,7 +21,7 @@ items=[(p.name,f'{i+1:02d}  {names[i]}') for i,p in enumerate(themes)]
 def sheet(items,filename):
     canvas=Image.new('L',(1256,54+((len(items)+1)//2)*344),255)
     draw=ImageDraw.Draw(canvas)
-    draw.text((24,12),'WhiteClock V1.0 - production C renderer / preview, not a device photograph',fill=0)
+    draw.text((24,12),'WhiteClock V1.1 - production C renderer / preview, not a device photograph',fill=0)
     for i,(name,label) in enumerate(items):
         with Image.open(output/name) as source:
             assert source.size==(296,152)

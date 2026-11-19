@@ -27,4 +27,12 @@
 !/releases/whiteclock-v1-fast-20261020/NOTES.md
 !/releases/whiteclock-v1-fast-20261020/LICENSE-DEJAVU.txt
 !/releases/whiteclock-v1-fast-20261020/LICENSE-UNIFONT.txt
+!/releases/whiteclock-v1.1.0/
+/releases/whiteclock-v1.1.0/*
+!/releases/whiteclock-v1.1.0/clock.bin
+!/releases/whiteclock-v1.1.0/clock.hex
+!/releases/whiteclock-v1.1.0/manifest.json
+!/releases/whiteclock-v1.1.0/NOTES.md
+!/releases/whiteclock-v1.1.0/LICENSE-DEJAVU.txt
+!/releases/whiteclock-v1.1.0/LICENSE-UNIFONT.txt
 /docs/images/*.pgm

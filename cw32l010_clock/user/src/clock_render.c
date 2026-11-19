@@ -148,7 +148,7 @@ static void prepare(const ClockFace *f)
         }
     } else if (f->page==PAGE_MENU) {
         title("设置");
-        static const char *items[]={"时间设置","日期设置","时间制式","定时反色","显示主题","专注计时","WhiteClock V1.0"};
+        static const char *items[]={"时间设置","日期设置","时间制式","定时反色","显示主题","专注计时","WhiteClock V1.1"};
         unsigned first=f->cursor<4 ? 0 : 3;
         for (unsigned i=first;i<first+4;++i) {
             unsigned y=39+(i-first)*21;

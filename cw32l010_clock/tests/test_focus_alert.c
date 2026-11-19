@@ -23,6 +23,8 @@ static struct {
 volatile EpdMetrics epd_metrics;
 
 void board_init(void) {}
+void power_idle(bool allow_deep) { (void)allow_deep;test_wait(); }
+bool temperature_active(void) { return false; }
 uint32_t board_millis(void) { return test.tick; }
 uint8_t board_key(void) { uint8_t key=test.key;test.key=KEY_NONE;return key; }
 bool board_rtc_init(void) { return true; }

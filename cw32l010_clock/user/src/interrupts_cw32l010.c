@@ -141,9 +141,7 @@ void LVD_IRQHandler(void)
  */
 void RTC_IRQHandler(void)
 {
-    /* USER CODE BEGIN */
-
-    /* USER CODE END */
+    board_rtc_wake_irq();
 }
 
 /**

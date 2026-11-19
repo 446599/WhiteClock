@@ -30,11 +30,16 @@ for line in subprocess.check_output(['arm-none-eabi-nm','-n',str(BUILD/'clock.el
 assert symbols['_estack'] == vectors[0]
 assert symbols['Reset_Handler'] == vectors[1] & ~1
 assert symbols['SysTick_Handler'] == vectors[15] & ~1
+assert symbols['RTC_IRQHandler'] == vectors[18] & ~1
+assert symbols['GPIOB_IRQHandler'] == vectors[22] & ~1
 assert symbols['_ebss'] + 1024 <= symbols['_estack']
 debug_symbols = {n:symbols[n] for n in [
     'clock_stage','epd_successes','epd_failures','rtc_failures','key_overflows',
     'main_loop_max_ms','epd_poll_max_ms','clock_ui_state','clock_key_events','clock_last_key_ms'
 ]}
+for name in ('power_deep_entries', 'power_sleep_ms', 'power_clock_failures'):
+    if name in symbols:
+        debug_symbols[name] = symbols[name]
 # EpdMetrics is a contiguous record of uint32_t fields, in epd.h order.
 for i, name in enumerate([
     'setup_ms','old_ms','new_ms','busy_ms','finish_ms','total_ms',

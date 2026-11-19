@@ -6,5 +6,6 @@
 bool temperature_convert(uint16_t ts,uint16_t vref,uint8_t t0,uint16_t trim,int16_t *c10);
 void temperature_init(void);
 void temperature_poll(uint32_t now);
+bool temperature_active(void);
 bool temperature_read(int16_t *c10);
 #endif

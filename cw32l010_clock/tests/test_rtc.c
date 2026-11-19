@@ -7,6 +7,7 @@
 FakeRTC test_rtc;
 FakeSYSCTRL test_sysctrl;
 FakeGPIO test_gpio;
+uint32_t test_nvic_enabled,test_nvic_pending=0xffffffffu;
 static uint32_t tick;
 static bool grant_window = true;
 uint32_t board_millis(void) { return tick; }
@@ -21,6 +22,22 @@ int main(void)
     assert(board_rtc_init());
     assert(test_rtc.PSC == 16383 && test_rtc.CR0_f.H24 && test_rtc.CR0_f.START);
     assert(test_rtc.CR1_f.SOURCE == 0 && test_rtc.KEY == 0x55 && test_sysctrl.LSE == 0x0a24);
+    assert((test_rtc.CR0&7u)==RTC_INTERVAL_EVERY_1S && test_rtc.IER==RTC_IT_INTERVAL);
+    assert((test_nvic_enabled&(1u<<RTC_IRQn)) && !(test_nvic_pending&(1u<<RTC_IRQn)));
+    uint32_t phase;
+    test_rtc.SSCNT=1u;
+    assert(board_rtc_sleep_ticks(&phase) && phase==1u);
+    test_rtc.SSCNT=(1u<<20)|16383u;
+    assert(board_rtc_sleep_ticks(&phase) && phase==32767u);
+    test_rtc.TIME=clock_encode(12,0,59);
+    assert(board_rtc_sleep_ticks(&phase) && phase==BOARD_RTC_MINUTE_TICKS-1u);
+    test_rtc.SSCNT=0;assert(!board_rtc_sleep_ticks(&phase));
+    test_rtc.SSCNT=16384u;assert(!board_rtc_sleep_ticks(&phase));
+    test_rtc.SSCNT=1;test_rtc.TIME=0x12006a;assert(!board_rtc_sleep_ticks(&phase));
+    test_rtc.TIME=0x120000;test_rtc.PSC=16382;assert(!board_rtc_sleep_ticks(&phase));
+    test_rtc.PSC=16383;test_rtc.IER=0;assert(!board_rtc_sleep_ticks(&phase));
+    test_rtc.IER=RTC_IT_INTERVAL;
+    test_rtc.ICR=0xffffffffu;board_rtc_wake_irq();assert(test_rtc.ICR==~RTC_IT_INTERVAL);
     uint8_t h,m,s;
     assert(board_rtc_read(&h,&m,&s) && h == 12 && m == 0 && s == 0);
     assert(board_rtc_set(23,59));
